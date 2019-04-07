@@ -76,6 +76,24 @@ class BinaryImg:
         
         return gradientImgThresholded
     
+    def HSLBinary (self, startImage, imgChannel = 's', thresh = (30, 100)):
+        HSLImage = cv2.cvtColor(startImage, cv2.COLOR_RGB2HLS)
+        
+        if imgChannel == 'h':
+            imgComponent = HSLImage[:,:,0]
+        elif imgChannel == 's':
+            imgComponent = HSLImage[:,:,2]
+        elif imgChannel == 'l':
+            imgComponent = HSLImage[:,:,1]
+        
+        imgThresholded = np.zeros_like(imgComponent)
+        imgThresholded[(imgComponent >= thresh[0]) & (imgComponent <= thresh[1])] = 1
+        
+        return imgThresholded
+    
+    def CombineBinariesBlueGreen(self, img1, img2):
+        combinedBinary = np.dstack((np.zeros_like(img1), img1, img2))*255
+        return combinedBinary
 
         
 
