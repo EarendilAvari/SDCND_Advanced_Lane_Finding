@@ -99,10 +99,4 @@ class BinaryImg:
         combinedBinary = np.dstack((np.zeros_like(img1), img1, img2))*255
         return combinedBinary
     
-
-        
-
-
-        
-        
             

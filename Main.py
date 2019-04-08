@@ -313,22 +313,22 @@ imgTest5ud = cam.UndistortImage(imgTest5, matrix, dist)
 imgTest6ud = cam.UndistortImage(imgTest6, matrix, dist)
 
 # Then their binary images created with the gradient in direction X using the component L
-imgStraight_lines2_Lgrad = binImg.GradientCalc(imgStraight_lines2ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', thresh = (30, 150))
-imgTest1_Lgrad = binImg.GradientCalc(imgTest1ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', thresh = (30, 150))
-imgTest2_Lgrad = binImg.GradientCalc(imgTest2ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', thresh = (30, 150))
-imgTest3_Lgrad = binImg.GradientCalc(imgTest3ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', thresh = (30, 150))
-imgTest4_Lgrad = binImg.GradientCalc(imgTest4ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', thresh = (30, 150))
-imgTest5_Lgrad = binImg.GradientCalc(imgTest5ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', thresh = (30, 150))
-imgTest6_Lgrad = binImg.GradientCalc(imgTest6ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', thresh = (30, 150))
+imgStraight_lines2_Lgrad = binImg.GradientCalc(imgStraight_lines2ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', thresh = (35, 190))
+imgTest1_Lgrad = binImg.GradientCalc(imgTest1ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', thresh = (35, 160))
+imgTest2_Lgrad = binImg.GradientCalc(imgTest2ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', thresh = (35, 160))
+imgTest3_Lgrad = binImg.GradientCalc(imgTest3ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', thresh = (35, 160))
+imgTest4_Lgrad = binImg.GradientCalc(imgTest4ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', thresh = (35, 160))
+imgTest5_Lgrad = binImg.GradientCalc(imgTest5ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', thresh = (35, 160))
+imgTest6_Lgrad = binImg.GradientCalc(imgTest6ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', thresh = (35, 160))
 
 # And the binary images created with the S component
 imgStraight_lines2_S = binImg.HSLBinary(imgStraight_lines2ud, 's', (180, 255))
-imgTest1_S = binImg.HSLBinary(imgTest1ud, 's', (180, 255))
-imgTest2_S = binImg.HSLBinary(imgTest2ud, 's', (180, 255))
-imgTest3_S = binImg.HSLBinary(imgTest3ud, 's', (180, 255))
-imgTest4_S = binImg.HSLBinary(imgTest4ud, 's', (180, 255))
-imgTest5_S = binImg.HSLBinary(imgTest5ud, 's', (180, 255))
-imgTest6_S = binImg.HSLBinary(imgTest6ud, 's', (180, 255))
+imgTest1_S = binImg.HSLBinary(imgTest1ud, 's', (180, 250))
+imgTest2_S = binImg.HSLBinary(imgTest2ud, 's', (180, 250))
+imgTest3_S = binImg.HSLBinary(imgTest3ud, 's', (180, 250))
+imgTest4_S = binImg.HSLBinary(imgTest4ud, 's', (180, 250))
+imgTest5_S = binImg.HSLBinary(imgTest5ud, 's', (180, 250))
+imgTest6_S = binImg.HSLBinary(imgTest6ud, 's', (180, 250))
 
 
 # Finally, lets combine the images in bicolor images, in order to see which parts are selected by the gradient of the L component and which parts are
@@ -344,7 +344,7 @@ imgTest6_bin = binImg.CombineBinariesBlueGreen(imgTest6_Lgrad, imgTest6_S)
 # And plot them
 figure10, fig10_axes = plt.subplots(3,2, figsize = (11, 11))
 figure10.tight_layout()
-figure10.suptitle('Binary images with gradient in X direction of the component L in blue and clean component S in green. \n Threshold gradient L = (30, 150), Threshold S = (150, 255)')
+figure10.suptitle('Binary images with gradient in X direction of the component L in green and clean component S in blue. \n Threshold gradient L = (30, 150), Threshold S = (150, 255)')
 fig10_axes[0,0].imshow(imgStraight_lines2)
 fig10_axes[0,0].set_title('"straight_lines2.jpg"', fontsize = 10)
 fig10_axes[0,0].axis('off')
@@ -368,7 +368,7 @@ figure10.savefig('ImgsReport/10_AllTestImagesBin01')
 
 figure11, fig11_axes = plt.subplots(3,2, figsize = (11, 11))
 figure11.tight_layout()
-figure11.suptitle('Binary images with gradient in X direction of the component L in blue and clean component S in green. \n Threshold gradient L = (30, 150), Threshold S = (150, 255)')
+figure11.suptitle('Binary images with gradient in X direction of the component L in green and clean component S in blue. \n Threshold gradient L = (30, 150), Threshold S = (150, 255)')
 fig11_axes[0,0].imshow(imgTest3)
 fig11_axes[0,0].set_title('"test3.jpg"', fontsize = 10)
 fig11_axes[0,0].axis('off')
@@ -392,9 +392,13 @@ figure11.savefig('ImgsReport/11_AllTestImagesBin02')
 
 
 '''
-By applying both methods on all images, can be seen that the combination of both is a very good approach to get the lane lines. What does not get detected 
-by the gradient in direction X of the L component, gets detected with the S component and viceversa. This method will be used to get the lane line points and
-after that the equations corresponding to the lane lines.
+By applying both methods on all images, can be seen that the combination of both is a very good approach to get the lane lines. What 
+does not get detected by the gradient in direction X of the L component, gets detected with the S component and viceversa. 
+This method will be used to get the lane line points and after that the equations corresponding to the lane lines.
+
+A little optimization was here done with the parameters, the threshold range for the gradient in X was changed from (30, 150) to (35. 175)
+and the threshold range for the S component was changed from (180, 255) to (180, 250) in order to prevent very strong shadows to appear 
+in the binary image, like in "test5.jpg"
 '''
 
 # %%%%%%%%%%%%%%%%%%% PERSPECTIVE TRANSFORM %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -442,7 +446,7 @@ exec(open('HoughLines.py').read())
 imgStraightLines1bin =  binImg.CombineBinaries(strLines1BinHSLchLDirX, imgStrLin1UndistS_bin)
 
 # Now the vertices where we calculate the Hough lines
-y_horizon = 450
+y_horizon = 465
 y_bottom = imgStraightLines1bin.shape[0] - 50
 
 houghVertices = houghVertices(100, 550, 1200, 800, y_bottom, y_horizon)
@@ -528,3 +532,93 @@ figure14.savefig('ImgsReport/14_TestImagesWarped')
 By showing the three images and their warped version it can be seen how well this polygon does performing the transformation. In all the three
 images the lines stay paralel, which means that the conversion is valid and can be used for further analysis.
 '''
+
+# %%%%%%%%%%%%%%%%%%% BINARY IMAGE AND PERSPECTIVE TRANSFORM %%%%%%%%%%%%%%%%%%%%%%%%
+
+'''
+Now that the methods to get a binary image and to warp it into a bird view image are selected, programmed and tested with test images, it is 
+important to decide: What to do first? get the binary image and then the perspective transform or viceversa?. For that, binary transformed 
+images of some of the test images in both orders will be created to see which order is better.
+'''
+
+## First binary image, than perspective transform
+
+imgTest1_bin = binImg.CombineBinaries(imgTest1_Lgrad, imgTest1_S)
+imgTest2_bin = binImg.CombineBinaries(imgTest2_Lgrad, imgTest2_S)
+imgTest3_bin = binImg.CombineBinaries(imgTest3_Lgrad, imgTest3_S)
+
+imgTest1_binWarped = cam.WarpPolygonToSquare(imgTest1_bin, y_horizon, imgTest1ud.shape[0], 
+                                        x_bottomLeft, x_topLeft, x_bottomRight, x_topRight)
+
+imgTest2_binWarped = cam.WarpPolygonToSquare(imgTest2_bin, y_horizon, imgTest1ud.shape[0], 
+                                        x_bottomLeft, x_topLeft, x_bottomRight, x_topRight)
+
+imgTest3_binWarped = cam.WarpPolygonToSquare(imgTest3_bin, y_horizon, imgTest1ud.shape[0], 
+                                        x_bottomLeft, x_topLeft, x_bottomRight, x_topRight)
+
+
+## First perspective transform, than binary image
+
+imgTest1_warpedLgrad = binImg.GradientCalc(imgTest1_warped, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', thresh = (35, 160))
+imgTest2_warpedLgrad = binImg.GradientCalc(imgTest2_warped, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', thresh = (35, 160))
+imgTest3_warpedLgrad = binImg.GradientCalc(imgTest3_warped, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', thresh = (35, 160))
+
+imgTest1_warpedS = binImg.HSLBinary(imgTest1_warped, 's', (180, 250))
+imgTest2_warpedS = binImg.HSLBinary(imgTest2_warped, 's', (180, 250))
+imgTest3_warpedS = binImg.HSLBinary(imgTest3_warped, 's', (180, 250))
+
+imgTest1_warpedBin = binImg.CombineBinaries(imgTest1_warpedLgrad, imgTest1_warpedS)
+imgTest2_warpedBin = binImg.CombineBinaries(imgTest2_warpedLgrad, imgTest2_warpedS)
+imgTest3_warpedBin = binImg.CombineBinaries(imgTest3_warpedLgrad, imgTest3_warpedS)
+
+## Let's plot the first image
+figure15, fig15_axes = plt.subplots(2,2, figsize = (10, 5))
+figure15.tight_layout()
+figure15.suptitle('Get binary image and then warp vs warp and then get binary image for "test2.jpg"')
+fig15_axes[0,0].imshow(imgTest2ud)
+fig15_axes[0,0].set_title('Original image', fontsize = 10)
+fig15_axes[0,1].imshow(imgTest2_warped)
+fig15_axes[0,1].set_title('Warped image', fontsize = 10)
+fig15_axes[1,0].imshow(imgTest2_binWarped, cmap = 'gray')
+fig15_axes[1,0].set_title('Binary and then warped', fontsize = 10)
+fig15_axes[1,1].imshow(imgTest2_warpedBin, cmap = 'gray')
+fig15_axes[1,1].set_title('Warped and then binary', fontsize = 10)
+plt.subplots_adjust(top = 0.9, bottom = 0.05)
+figure15.savefig('ImgsReport/15_ComparisonOrderTest2')
+
+'''
+For this image can be seen that both results are very similar, but in the warped image before getting the binary image with the lines
+the right dashed line is not so well defined, also a little detail in the road is stronger detected in that version. Another thing is the 
+car. While by creating first the binary image and then warping it the car does not get detected, but by warping the image and then creating
+a binary image from it, the car gets detected, what can cause wrong measurements of the lines.
+
+Let's plot the comparison with another image to be sure what option is the best
+'''
+
+# %% 
+
+## Let's plot the first image
+figure16, fig16_axes = plt.subplots(2,2, figsize = (10, 5))
+figure16.tight_layout()
+figure16.suptitle('Get binary image and then warp vs warp and then get binary image for "test1.jpg"')
+fig16_axes[0,0].imshow(imgTest1ud)
+fig16_axes[0,0].set_title('Original image', fontsize = 10)
+fig16_axes[0,1].imshow(imgTest1_warped)
+fig16_axes[0,1].set_title('Warped image', fontsize = 10)
+fig16_axes[1,0].imshow(imgTest1_binWarped, cmap = 'gray')
+fig16_axes[1,0].set_title('Binary and then warped', fontsize = 10)
+fig16_axes[1,1].imshow(imgTest1_warpedBin, cmap = 'gray')
+fig16_axes[1,1].set_title('Warped and then binary', fontsize = 10)
+plt.subplots_adjust(top = 0.9, bottom = 0.05)
+figure16.savefig('ImgsReport/16_ComparisonOrderTest1')
+
+
+'''
+In the case of this image, it can be seen that the left line gets detected longer in the version where first the binary image is created 
+and then the binary image is warped than in the contrary version. Also in the contrary version some other details of the street are being
+detected, which are not part of the line. So the better approach may be to get first the binary image and then warp it.
+'''
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%% IDENTIFICATION OF LANE LINE PIXELS ON WARPED BINARY IMAGE %%%%%%%%%%%%%%%%%
+
+
