@@ -57,6 +57,28 @@ class Camera:
             undistortedImgFile = savePath % (i+1)
             cv2.imwrite(undistortedImgFile, undistortedImg)
             
+    def WarpPolygonToSquare(self, image, y_top, y_bottom, x_leftBottom, x_leftTop, x_rightBottom, x_rightTop):
+        # Creates four points in the original image and in the warped image
+        orgImagePointLeftBottom = (x_leftBottom, y_bottom)
+        orgImagePointLeftTop = (x_leftTop, y_top)
+        orgImagePointRightBottom = (x_rightBottom, y_bottom)
+        orgImagePointRightTop = (x_rightTop, y_top)
+        destImagePointLeftBottom = (300, image.shape[0])
+        destImagePointLeftTop = (300, 0)
+        destImagePointRightBottom = (image.shape[1] - 300, image.shape[0])
+        destImagePointRightTop = (image.shape[1] - 300, 0)
+        
+        orgPoints = np.float32([orgImagePointLeftBottom, orgImagePointLeftTop, orgImagePointRightTop, orgImagePointRightBottom])
+        destPoints = np.float32([destImagePointLeftBottom, destImagePointLeftTop, destImagePointRightTop, destImagePointRightBottom])
+        
+        # It gets the transformation matrix using the OpenCV function getPerspectiveTransform
+        transMatrix = cv2.getPerspectiveTransform(orgPoints, destPoints)
+        # It transforms the image using the transformation matrix and the OpenCV function warpPerspective
+        warpedImg = cv2.warpPerspective(image, transMatrix, (image.shape[1], image.shape[0]), flags = cv2.INTER_LINEAR)
+        
+        return warpedImg
+    
+        
             
 
 

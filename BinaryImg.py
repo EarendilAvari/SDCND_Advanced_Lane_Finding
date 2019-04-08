@@ -91,9 +91,14 @@ class BinaryImg:
         
         return imgThresholded
     
+    def CombineBinaries(self, img1, img2):
+        combinedBinary = cv2.bitwise_or(img1, img2)*255
+        return combinedBinary
+    
     def CombineBinariesBlueGreen(self, img1, img2):
         combinedBinary = np.dstack((np.zeros_like(img1), img1, img2))*255
         return combinedBinary
+    
 
         
 

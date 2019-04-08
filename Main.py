@@ -268,9 +268,9 @@ gradient, it seem like a good idea to create a binary image with this component
 
 # %% Binary image with HSL components
 
-imgStrLin1UndistH_bin = binImg.HSLBinary(imgStraightLines1Undist, 'h', (150, 255))
-imgStrLin1UndistS_bin = binImg.HSLBinary(imgStraightLines1Undist, 's', (150, 255))
-imgStrLin1UndistL_bin = binImg.HSLBinary(imgStraightLines1Undist, 'l', (150, 255))
+imgStrLin1UndistH_bin = binImg.HSLBinary(imgStraightLines1Undist, 'h', (180, 255))
+imgStrLin1UndistS_bin = binImg.HSLBinary(imgStraightLines1Undist, 's', (180, 255))
+imgStrLin1UndistL_bin = binImg.HSLBinary(imgStraightLines1Undist, 'l', (180, 255))
 
 figure9, fig9_axes = plt.subplots(2,2, figsize = (10, 5))
 figure9.tight_layout()
@@ -397,4 +397,134 @@ by the gradient in direction X of the L component, gets detected with the S comp
 after that the equations corresponding to the lane lines.
 '''
 
-# %% 
+# %%%%%%%%%%%%%%%%%%% PERSPECTIVE TRANSFORM %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+'''
+Now that we have a robust method to get a binary image where the line pixels can be found, it is time to transform the images into
+an aereal view, so the lines can be seen in a plane.
+For that, the function WarpPolygonToSquare was added to the Camera class. It transforms the image using a polygon, so it receives four values
+of X and two of Y.
+
+Let's try that function with the first image "straight_lines1.jpg"
+'''
+
+imgStraightLines1Warped = cam.WarpPolygonToSquare(imgStraightLines1Undist, 450, 700, 200, 580, 1100, 700)
+
+# Now, lets print it and compare it with the original image
+
+figure12, fig12_axes = plt.subplots(1, 2, figsize = (10, 5))
+figure12.tight_layout()
+figure12.suptitle('Perspective transformed image')
+fig12_axes[0].imshow(imgStraightLines1Undist)
+fig12_axes[0].set_title('Original Image')
+fig12_axes[1].imshow(imgStraightLines1Warped)
+fig12_axes[1].set_title('Transformed image')
+figure12.savefig('ImgsReport/12_StraightLines1_transformed')
+
+'''
+As it can be seen in the images, the perspective transform is working well getting an image in "bird view" perspective. The problem is
+that the lines are not paralel as they should be. That is because the vertices of the selected polygon were selected very roughly. That the 
+lines are paralel in the bird view image is very important in order to get good calculations after that. So it is needed to get the vertices
+of that polygon in a precise way.
+
+Here is where the work in the first project can be very useful to calculate those vertices. So we import from the first project functions 
+"region_of_interest", "hough_vertices" and "hough_lines", now located in the file HoughLines.py and we update the "hough_lines" function to 
+return the points at the beginning and at the end of the line.
+
+Also the function "CombineBinaries" was added to the class BinaryImg. 
+'''
+
+# %%%%%%%%%%%%%%%%%%% PERSPECTIVE TRANSFORM WITH HOUGH LINES %%%%%%%%%%%%%%%%%%
+
+exec(open('HoughLines.py').read())
+
+# First, the binary image where the lane lines are visible needs to be made, to do that, the two images calculated before are used
+imgStraightLines1bin =  binImg.CombineBinaries(strLines1BinHSLchLDirX, imgStrLin1UndistS_bin)
+
+# Now the vertices where we calculate the Hough lines
+y_horizon = 450
+y_bottom = imgStraightLines1bin.shape[0] - 50
+
+houghVertices = houghVertices(100, 550, 1200, 800, y_bottom, y_horizon)
+
+# Then crop the image to the region of interest
+houghRegion = region_of_interest(imgStraightLines1bin, houghVertices)
+
+# Then calculate the hough lines, together with the points
+houghLines, x_bottomLeft, x_topLeft, x_bottomRight, x_topRight = hough_lines(imgStraightLines1Undist, imgStraightLines1bin, 
+                                                                                 1, np.pi/180, 50, 40, 2, y_horizon)
+# Now with the new points the warped image corrected
+imgStraightLines1Warped_corr = cam.WarpPolygonToSquare(imgStraightLines1Undist, y_horizon, imgStraightLines1Undist.shape[0], 
+                                                       x_bottomLeft, x_topLeft, x_bottomRight, x_topRight)
+
+# Lets draw the polygon in the original image
+polygonVerticesOrig = np.array([[x_bottomLeft, y_bottom + 50],[x_topLeft, y_horizon],[x_topRight, y_horizon],[x_bottomRight, y_bottom + 50]], 
+                           np.int32)
+polygonVerticesWarped = np.array([[300, imgStraightLines1Warped_corr.shape[0]], [300, 0], [imgStraightLines1Warped_corr.shape[1] - 300, 0], 
+                                  [imgStraightLines1Warped_corr.shape[1] - 300, imgStraightLines1Warped_corr.shape[0]]], np.int32)
+
+imgStraightLines1Poly = imgStraightLines1Undist.copy()
+imgStraightLines1Warped_corrPoly = imgStraightLines1Warped_corr.copy()
+cv2.polylines(imgStraightLines1Poly, [polygonVerticesOrig], True, (255,0,0),3)
+cv2.polylines(imgStraightLines1Warped_corrPoly, [polygonVerticesWarped], True, (255,0,0),4)
+
+# Now let's print the entire process
+figure13, fig13_axes = plt.subplots(2,2, figsize = (10, 5))
+figure13.tight_layout()
+figure13.suptitle('Perspective transformed image using polygon calculated with Hough lane lines')
+fig13_axes[0,0].imshow(houghRegion, cmap = 'gray')
+fig13_axes[0,0].set_title('Binary image masked with a region of interest', fontsize = 10)
+fig13_axes[0,1].imshow(houghLines)
+fig13_axes[0,1].set_title('Lane lines detected with Hough Lines Algorithm', fontsize = 10)
+fig13_axes[1,0].imshow(imgStraightLines1Poly)
+fig13_axes[1,0].set_title('Original image with transformation polygon', fontsize = 10)
+fig13_axes[1,1].imshow(imgStraightLines1Warped_corrPoly)
+fig13_axes[1,1].set_title('Transformated image', fontsize = 10)
+plt.subplots_adjust(top = 0.9, bottom = 0.05)
+figure13.savefig('ImgsReport/13_StraightLines1_transformed_corr')
+
+'''
+By using this method to find the vertices of the conversion polygon the lane lines in the converted image are completely paralel. What means
+that the conversion is now accurate and appropiate to be used. The best thing is, that this process is not needed in the pipeline, these 
+vertices can be used for any image to convert it into bird view image, so they can be used as parameters within the pipeline.
+'''
+
+# %% Lets validate the parameters by doing the conversion with other three images
+
+imgTest1_warped = cam.WarpPolygonToSquare(imgTest1ud, y_horizon, imgTest1ud.shape[0], 
+                                        x_bottomLeft, x_topLeft, x_bottomRight, x_topRight)
+
+imgTest2_warped = cam.WarpPolygonToSquare(imgTest2ud, y_horizon, imgTest2ud.shape[0], 
+                                        x_bottomLeft, x_topLeft, x_bottomRight, x_topRight)
+
+imgTest3_warped = cam.WarpPolygonToSquare(imgTest3ud, y_horizon, imgTest3ud.shape[0], 
+                                        x_bottomLeft, x_topLeft, x_bottomRight, x_topRight)
+
+figure14, fig14_axes = plt.subplots(3,2, figsize = (11, 11))
+figure14.tight_layout()
+figure14.suptitle('Perspective transformed images using polygon calculated with Hough lane lines')
+fig14_axes[0,0].imshow(imgTest1ud)
+fig14_axes[0,0].set_title('"test1.jpg"', fontsize = 10)
+fig14_axes[0,0].axis('off')
+fig14_axes[0,1].imshow(imgTest1_warped)
+fig14_axes[0,1].set_title('Warped "test1.jpg"', fontsize = 10)
+fig14_axes[0,1].axis('off')
+fig14_axes[1,0].imshow(imgTest2ud)
+fig14_axes[1,0].set_title('"test2.jpg"', fontsize = 10)
+fig14_axes[1,0].axis('off')
+fig14_axes[1,1].imshow(imgTest2_warped)
+fig14_axes[1,1].set_title('Warped "test2.jpg"', fontsize = 10)
+fig14_axes[1,1].axis('off')
+fig14_axes[2,0].imshow(imgTest3ud)
+fig14_axes[2,0].set_title('"test3.jpg"', fontsize = 10)
+fig14_axes[2,0].axis('off')
+fig14_axes[2,1].imshow(imgTest3_warped)
+fig14_axes[2,1].set_title('Warped "test5.jpg"', fontsize = 10)
+fig14_axes[2,1].axis('off')
+plt.subplots_adjust(top = 0.9, bottom = 0.05)
+figure14.savefig('ImgsReport/14_TestImagesWarped')
+
+'''
+By showing the three images and their warped version it can be seen how well this polygon does performing the transformation. In all the three
+images the lines stay paralel, which means that the conversion is valid and can be used for further analysis.
+'''
