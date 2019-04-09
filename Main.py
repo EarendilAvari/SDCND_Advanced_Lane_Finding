@@ -15,6 +15,7 @@ import matplotlib.image as mpimg
 
 exec(open('Camera.py').read())
 exec(open('BinaryImg.py').read())
+exec(open('ProcessLines.py').read())
 
 # %%%%%%%%%%%%%%%%%% CAMERA CALIBRATION %%%%%%%%%%%%%%%%%%%%
 
@@ -619,6 +620,144 @@ and then the binary image is warped than in the contrary version. Also in the co
 detected, which are not part of the line. So the better approach may be to get first the binary image and then warp it.
 '''
 
-# %%%%%%%%%%%%%%%%%%%%%%%%%% IDENTIFICATION OF LANE LINE PIXELS ON WARPED BINARY IMAGE %%%%%%%%%%%%%%%%%
+# %%%%%%%%%%%%%%%%%%%%%%%%%% IDENTIFICATION OF LANE LINES ON WARPED BINARY IMAGE %%%%%%%%%%%%%%%%%
 
+'''
+Now it is time to calculate mathematically the lane lines by detecting their pixels on the warped binary images. For that a new class was programmed and
+tested. The class "LinesProcessing" located in the file "ProcessLines.py", which contains the functions "findFirstLaneLinesPixels", 
+"findNewLaneLinePixels" and "getLines".
+
+The function "findFirstLaneLinesPixels" is meant to be used on the first frame of a video, or when the lines are completely lost. That is because it makes
+some very heavy computation. In the normal case this function should only be used for the first frame of a video. 
+
+In order to detect the lines for a new frame after the lines were detected for the frame before, the function "findNewLaneLinePixels" should be used.
+This function uses the polynom coeficients of the lines of the last frame in order to get the lines of the current frame. It is way faster than the 
+function "findFirstLaneLinesPixels" because it only contains one loop. An interesting option is to use the average of the polynomic coeficients of the lines
+of the last n frames, wheiging more the ones of the last frames, getting so more robust calculations
+
+To get the mathematical equations of the lane lines, the function "getLines" is used. This function interpolates the lane lines points found with
+"findFirstLaneLinesPixels" or with "findNewLaneLinePixels". This function returns the polynomic coeficients of the two lines and the image with the calculated
+line drawn on it.
+
+Now let's try the functions "findFirstLaneLinesPixels" on the images "test1.jpg", "test2.jpg" and "test3.jpg". 
+'''
+
+# First, we need to create an object of type "LinesProcessing".
+linesProc = LinesProcessing()
+
+# Then, the lane line pixels are calculated
+imgTest1_LeftX, imgTest1_LeftY, imgTest1_RightX, imgTest1_RightY, imgTest1_LinePixels = linesProc.findFirstLaneLinesPixels(imgTest1_binWarped, showWindows = False,
+                                                                                                                           paintLinePixels = True)
+imgTest2_LeftX, imgTest2_LeftY, imgTest2_RightX, imgTest2_RightY, imgTest2_LinePixels = linesProc.findFirstLaneLinesPixels(imgTest2_binWarped, showWindows = False,
+                                                                                                                           paintLinePixels = True)
+imgTest3_LeftX, imgTest3_LeftY, imgTest3_RightX, imgTest3_RightY, imgTest3_LinePixels = linesProc.findFirstLaneLinesPixels(imgTest3_binWarped, showWindows = False,
+                                                                                                                           paintLinePixels = True)
+
+# Then the lines are calculated
+imgTest1_leftCoeff, imgTest1_rightCoeff, imgTest1_Lines = linesProc.getLines(imgTest1_LinePixels,imgTest1_LeftX,imgTest1_LeftY,imgTest1_RightX,
+                                                                            imgTest1_RightY, drawLines = True)
+imgTest2_leftCoeff, imgTest2_rightCoeff, imgTest2_Lines = linesProc.getLines(imgTest2_LinePixels,imgTest2_LeftX,imgTest2_LeftY,imgTest2_RightX,
+                                                                            imgTest2_RightY, drawLines = True)
+imgTest3_leftCoeff, imgTest3_rightCoeff, imgTest3_Lines = linesProc.getLines(imgTest3_LinePixels,imgTest3_LeftX,imgTest3_LeftY,imgTest3_RightX,
+                                                                            imgTest3_RightY, drawLines = True)
+
+figure17, fig17_axes = plt.subplots(3,1, figsize=(5,10))
+figure17.tight_layout()
+figure17.suptitle('Calculated lines on "test1.jpg", "test2.jpg" and "test3.jpg"')
+fig17_axes[0].imshow(imgTest1_Lines)
+fig17_axes[0].set_title('test1.jpg', fontsize = 10)
+fig17_axes[1].imshow(imgTest2_Lines)
+fig17_axes[1].set_title('test2.jpg', fontsize = 10)
+fig17_axes[2].imshow(imgTest3_Lines)
+fig17_axes[2].set_title('test3.jpg', fontsize = 10)
+plt.subplots_adjust(top = 0.9, bottom = 0)
+figure17.savefig('ImgsReport/17_CalculatedLines1')
+
+'''
+It can be seen that the functions work very well with these images, getting accurate curves. The only problem here seem to be that the lines are not 
+completelly paralel. 
+
+Now let's try the function "findNewLaneLinePixels" using an average of the polynomic coeficients calculated now.
+'''
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%% IDENTIFICATION OF LANE LINES ON WARPED BINARY IMAGE WITH FILTERING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+## To do this, lets use the coeficients of the polynoms calculated on the last step, but considering that the coeficients of the second image weight more
+## because these lines are more paralel
+
+imgTest123_leftCoeff = (3*imgTest2_leftCoeff + imgTest1_leftCoeff + imgTest3_leftCoeff)/5
+imgTest123_rightCoeff = (3*imgTest2_rightCoeff + imgTest1_rightCoeff + imgTest3_rightCoeff)/5
+
+# Then, the lane line pixels are calculated
+imgTest1_linePixels_return = linesProc.findNewLaneLinePixels(imgTest1_binWarped, imgTest123_leftCoeff, imgTest123_rightCoeff, 
+                                                             paintLinePixels = True, distCenter = 50)
+imgTest1_LeftX2, imgTest1_LeftY2, imgTest1_RightX2, imgTest1_RightY2, imgTest1_LinePixels2 = imgTest1_linePixels_return
+imgTest2_linePixels_return = linesProc.findNewLaneLinePixels(imgTest2_binWarped, imgTest123_leftCoeff, imgTest123_rightCoeff, 
+                                                             paintLinePixels = True, distCenter = 50)
+imgTest2_LeftX2, imgTest2_LeftY2, imgTest2_RightX2, imgTest2_RightY2, imgTest2_LinePixels2 = imgTest2_linePixels_return
+imgTest3_linePixels_return = linesProc.findNewLaneLinePixels(imgTest3_binWarped, imgTest123_leftCoeff, imgTest123_rightCoeff, 
+                                                             paintLinePixels = True, distCenter = 50)
+imgTest3_LeftX2, imgTest3_LeftY2, imgTest3_RightX2, imgTest3_RightY2, imgTest3_LinePixels2 = imgTest3_linePixels_return
+
+# Then the lines are calculated
+imgTest1_leftCoeff2, imgTest1_rightCoeff2, imgTest1_Lines2 = linesProc.getLines(imgTest1_LinePixels2,imgTest1_LeftX2,imgTest1_LeftY2,imgTest1_RightX2,
+                                                                            imgTest1_RightY2, drawLines = True)
+imgTest2_leftCoeff2, imgTest2_rightCoeff2, imgTest2_Lines2 = linesProc.getLines(imgTest2_LinePixels2,imgTest2_LeftX2,imgTest2_LeftY2,imgTest2_RightX2,
+                                                                            imgTest2_RightY2, drawLines = True)
+imgTest3_leftCoeff2, imgTest3_rightCoeff2, imgTest3_Lines2 = linesProc.getLines(imgTest3_LinePixels2,imgTest3_LeftX2,imgTest3_LeftY2,imgTest3_RightX2,
+                                                                            imgTest3_RightY2, drawLines = True)
+
+figure18, fig18_axes = plt.subplots(3,2, figsize=(7,7))
+figure18.tight_layout()
+figure18.suptitle('Calculated lines on "test1.jpg", "test2.jpg" and "test3.jpg"')
+fig18_axes[0,0].imshow(imgTest1_Lines2)
+fig18_axes[0,0].set_title('test1.jpg with filtering', fontsize = 10)
+fig18_axes[0,1].imshow(imgTest1_Lines)
+fig18_axes[0,1].set_title('test1.jpg without filtering', fontsize = 10)
+fig18_axes[1,0].imshow(imgTest2_Lines2)
+fig18_axes[1,0].set_title('test2.jpg with filtering', fontsize = 10)
+fig18_axes[1,1].imshow(imgTest2_Lines)
+fig18_axes[1,1].set_title('test2.jpg without filtering', fontsize = 10)
+fig18_axes[2,0].imshow(imgTest3_Lines2)
+fig18_axes[2,0].set_title('test3.jpg with filtering', fontsize = 10)
+fig18_axes[2,1].imshow(imgTest3_Lines)
+fig18_axes[2,1].set_title('test3.jpg without filtering', fontsize = 10)
+plt.subplots_adjust(top = 0.9, bottom = 0)
+figure18.savefig('ImgsReport/18_CalculatedLines2')
+
+
+'''
+Here it can be seen how the lines tend to be more similar to the other ones because of the ponderation. Specially in the case of "test3.jpg" it can be 
+seen that the lines are inclined more to the left because of the influence of "test2.jpg" whose coeficients are of ponderation 3 of 5. Here gets evident
+that a very good idea would be to use the coeficients of the last n lines, ponderating stronger the coeficients of the last frames, because they will be 
+more similar to the current frame than the older coeficients.
+'''
+
+# %%%%%%%%%%%%%%%%%%%%%% CALCULATION OF THE RADIUS OF CURVATURE AND THE POSITION OF THE CAR %%%%%%%%%%%%%%%%%%%%%%%%%%
+
+'''
+To calculate the radius of curvature and the position of the car, three new functions were added to the class "LinesProcessing". These functions are
+"getMeterPolynoms", "calculateCurvatureMeters" and "calculateVehiclePos". The function "getMeterPolynoms" does another interpolation in order to get
+the polynomic coeficients in metric measurement units. These coeficients are used by the functions "calculateCurvatureMeters" and "calculateVehiclePos"
+to calculate the radius of curvature of the lines and the position of the car relative to the center of the image.
+
+Let's calculate these values for the images test1.jpg, test2.jpg and test3.jpg using the lines calculated without ponderation
+
+'''
+
+imgTest1_leftCoeffMetric, imgTest1_rightCoeffMetric = linesProc.getMeterPolynoms(imgTest1_LeftX,imgTest1_LeftY,imgTest1_RightX,imgTest1_RightY)
+imgTest2_leftCoeffMetric, imgTest2_rightCoeffMetric = linesProc.getMeterPolynoms(imgTest2_LeftX,imgTest2_LeftY,imgTest2_RightX,imgTest2_RightY)
+imgTest3_leftCoeffMetric, imgTest3_rightCoeffMetric = linesProc.getMeterPolynoms(imgTest3_LeftX,imgTest3_LeftY,imgTest3_RightX,imgTest3_RightY)
+
+imgTest1_radLeft, imgTest1_radRight = linesProc.calculateCurvatureMeters(imgTest1_leftCoeffMetric, imgTest1_rightCoeffMetric)
+imgTest2_radLeft, imgTest2_radRight = linesProc.calculateCurvatureMeters(imgTest2_leftCoeffMetric, imgTest2_rightCoeffMetric)
+imgTest3_radLeft, imgTest3_radRight = linesProc.calculateCurvatureMeters(imgTest3_leftCoeffMetric, imgTest3_rightCoeffMetric)
+
+imgTest1_posCar = linesProc.calculateVehiclePos(imgTest1_leftCoeffMetric, imgTest1_rightCoeffMetric)
+imgTest2_posCar = linesProc.calculateVehiclePos(imgTest2_leftCoeffMetric, imgTest2_rightCoeffMetric)
+imgTest3_posCar = linesProc.calculateVehiclePos(imgTest3_leftCoeffMetric, imgTest3_rightCoeffMetric)
+
+print('Test1.jpg: Radius left: ', imgTest1_radLeft, ' [m] Radius right: ', imgTest1_radRight, ' [m] Car position: ', imgTest1_posCar, ' [m]')
+print('Test2.jpg: Radius left: ', imgTest2_radLeft, ' [m] Radius right: ', imgTest2_radRight, ' [m] Car position: ', imgTest2_posCar, ' [m]')
+print('Test3.jpg: Radius left: ', imgTest3_radLeft, ' [m] Radius right: ', imgTest3_radRight, ' [m] Car position: ', imgTest3_posCar, ' [m]')
 

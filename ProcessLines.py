@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 class LinesProcessing:
-    def findLaneLinesPixels (self, image, heighWindows = 80, distCenter = 75, minPix = 50, drawWindows = True, paintLinePixels = True):
+    def findFirstLaneLinesPixels (self, image, heighWindows = 80, distCenter = 75, minPix = 50, showWindows = True, paintLinePixels = True):
         # This function is similar to "find_lane_pixels" of the lesson "Advanced computer vision"
         # it gets the X and Y values of the pixels corresponding to the right and left lane lines.
         # It uses the slicing window method to diferentiate which pixels correspond to the left 
@@ -62,7 +62,7 @@ class LinesProcessing:
             winX_right_high = rightCurrMidPoint + distCenter
         
             # Draws the windows on the output image
-            if drawWindows == 'True':
+            if showWindows == True:
                 cv2.rectangle(imgPixels,(winX_left_low,winY_low),(winX_left_high,winY_high),(0,255,0), 2) 
                 cv2.rectangle(imgPixels,(winX_right_low,winY_low),(winX_right_high,winY_high),(0,255,0), 2) 
         
@@ -95,14 +95,56 @@ class LinesProcessing:
         rightY = nonZeroY[rightLineInds]
         
         # Paints the pixels on the left line blue and in the right line red
-        if paintLinePixels == 'True':
+        if paintLinePixels == True:
             imgPixels[leftY, leftX] = [255,0,0]
             imgPixels[rightY, rightX] = [0, 0, 255]
         
-        
         return leftX, leftY, rightX, rightY, imgPixels
     
-    def getLines(self, image, leftX, leftY, rightX, rightY, drawLines = 'True'):
+    def findNewLaneLinePixels(self, image, coeffLastLeftLine, coeffLastRightLine, distCenter = 75, paintLinePixels = True):
+        # This function is similar to "findFirstLaneLinesPixels", but it finds the new pixel values 
+        # based on the last found lines, or better said, based on their polynom coeficients.
+        # It gets the X and Y values of the pixels corresponding to the right and left lane lines.
+        # It searches for the pixels close to the last found lines in order to optimize the search.
+        
+        # Creates a 3-channel image to visualize the results and to be used further
+        imgPixels = np.dstack((image, image, image))
+        
+        # Identifies the non zero pixels on the image. This values correspond
+        # to the indexes where the nonzero pixels are located, so a non zero point
+        # can be found like (nonZeroX[i], nonZeroY[i])
+        nonZero = image.nonzero()
+        nonZeroX = np.array(nonZero[1])
+        nonZeroY = np.array(nonZero[0])
+        
+        # These two lists will contain the indices on nonZeroX and nonZeroY that correspond
+        # to pixels in the left line and in the right line
+        leftLineInds = []
+        rightLineInds = []
+        
+        for i in range(0, nonZeroY.shape[0] - 1):
+            xLeftCurr = coeffLastLeftLine[0]*nonZeroY[i]**2 + coeffLastLeftLine[1]*nonZeroY[i] + coeffLastLeftLine[2]
+            xRightCurr = coeffLastRightLine[0]*nonZeroY[i]**2 + coeffLastRightLine[1]*nonZeroY[i] + coeffLastRightLine[2]
+            if ((nonZeroX[i] > (xLeftCurr - distCenter)) & (nonZeroX[i] < (xLeftCurr + distCenter))):
+                leftLineInds.append(i)
+            if ((nonZeroX[i] > (xRightCurr - distCenter)) & (nonZeroX[i] < (xRightCurr + distCenter))):
+                rightLineInds.append(i)
+                
+        # Extract left and right line pixel positions
+        leftX = nonZeroX[leftLineInds]
+        leftY = nonZeroY[leftLineInds] 
+        rightX = nonZeroX[rightLineInds]
+        rightY = nonZeroY[rightLineInds]
+        
+        # Paints the pixels on the left line blue and in the right line red
+        if paintLinePixels == True:
+            imgPixels[leftY, leftX] = [255,0,0]
+            imgPixels[rightY, rightX] = [0, 0, 255]
+
+        return leftX, leftY, rightX, rightY, imgPixels            
+        
+    
+    def getLines(self, image, leftX, leftY, rightX, rightY, drawLines = True):
         # Gets the coeficients of a second grade polynom defining the right and the left lines.
         # If desired, it draws the lines into the image
         
@@ -123,29 +165,41 @@ class LinesProcessing:
             leftLineX = 1*linesY**2 + 1*linesY
             rightLineX = 1*linesY**2 + 1*linesY
 
-        if drawLines == 'True':
-            imageLines[np.int_(linesY), np.int_(leftLineX), 0] = 255
-            imageLines[np.int_(linesY), np.int_(leftLineX), 1] = 255
-            imageLines[np.int_(linesY), np.int_(leftLineX) + 1, 0] = 255
-            imageLines[np.int_(linesY), np.int_(leftLineX) + 1, 1] = 255
-            imageLines[np.int_(linesY), np.int_(leftLineX) - 1, 0] = 255
-            imageLines[np.int_(linesY), np.int_(leftLineX) - 1, 1] = 255
-            imageLines[np.int_(linesY), np.int_(rightLineX), 0] = 255
-            imageLines[np.int_(linesY), np.int_(rightLineX), 1] = 255
-            imageLines[np.int_(linesY), np.int_(rightLineX) + 1, 0] = 255
-            imageLines[np.int_(linesY), np.int_(rightLineX) + 1, 1] = 255
-            imageLines[np.int_(linesY), np.int_(rightLineX) - 1, 0] = 255
-            imageLines[np.int_(linesY), np.int_(rightLineX) - 1, 1] = 255
+        if drawLines == True:
+            imageLines[np.int_(linesY), np.int_(leftLineX), 1:] = 255
+            imageLines[np.int_(linesY), np.int_(leftLineX) + 1, 1:] = 255
+            imageLines[np.int_(linesY), np.int_(leftLineX) - 1, 1:] = 255
+            imageLines[np.int_(linesY), np.int_(rightLineX), 1:] = 255
+            imageLines[np.int_(linesY), np.int_(rightLineX) + 1, 1:] = 255
+            imageLines[np.int_(linesY), np.int_(rightLineX) - 1, 1:] = 255
             
         return leftLineCoeficients, rightLineCoeficients, imageLines
     
+    def getMeterPolynoms(self, leftX, leftY, rightX, rightY, X_mPerPix = (3.7/700), Y_mPerPix = (30/720)):
+        # Gets the polynomic coeficients of the lane lines in metric values
+        leftLineCoeficientsMeters = np.polyfit(leftY*Y_mPerPix, leftX*X_mPerPix, 2)
+        rightLineCoeficientsMeters = np.polyfit(rightY*Y_mPerPix, rightX*X_mPerPix, 2)
+        
+        return leftLineCoeficientsMeters, rightLineCoeficientsMeters
+    
+    def calculateCurvatureMeters(self, leftLineCoeficientsMeters, rightLineCoeficientsMeters, Y_mPerPix = (30/720), Ymax = 719):
+        # Gets the curvature of the left and right lines 
+        leftLineRad = ((1+(2*leftLineCoeficientsMeters[0]*Ymax*Y_mPerPix + leftLineCoeficientsMeters[1])**2)**(3/2))/abs(2*leftLineCoeficientsMeters[0])
+        rightLineRad = ((1+(2*rightLineCoeficientsMeters[0]*Ymax*Y_mPerPix + rightLineCoeficientsMeters[1])**2)**(3/2))/abs(2*rightLineCoeficientsMeters[0])
 
-# Load our image
-binary_warped = mpimg.imread('warped_example.jpg')
+        return leftLineRad, rightLineRad
+    
+    def calculateVehiclePos(self, leftLineCoeficientsMeters, rightLineCoeficientsMeters, X_mPerPix = (3.7/700), Y_mPerPix = (30/720), Xmax = 1279, Ymax = 719):
+        # Gets the position of the car, relative to the center of the image. Positive values indicate that the car is leaned to the right, 
+        # Negative values indicate that the car is leaned to the left
+        Xcenter = (Xmax/2)*X_mPerPix
+        XleftLine = leftLineCoeficientsMeters[0]*(Ymax*Y_mPerPix)**2 + leftLineCoeficientsMeters[1]*(Ymax*Y_mPerPix) + leftLineCoeficientsMeters[2]
+        XrightLine = rightLineCoeficientsMeters[0]*(Ymax*Y_mPerPix)**2 + rightLineCoeficientsMeters[1]*(Ymax*Y_mPerPix) + rightLineCoeficientsMeters[2]
+        carWidth = XrightLine - XleftLine
+        XcarCenter = XleftLine + carWidth/2
+        Xcar = XcarCenter - Xcenter
+        
+        return Xcar
+        
+    
 
-linesProc = LinesProcessing()
-
-leftX, leftY, rightX, rightY, test1 = linesProc.findLaneLinesPixels(binary_warped, drawWindows = 'True', paintLinePixels = 'True' )
-leftLineCoeff, rightLineCoeff, test2 = linesProc.getLines(test1, leftX, leftY, rightX, rightY, drawLines = 'True')
-
-plt.imshow(test2)
