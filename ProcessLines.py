@@ -12,12 +12,14 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 class LinesProcessing:
+    '''
     def __init__(self):
         self.lastLeftLineCoeficients = None
         self.lastRightLineCoeficients = None
         self.lastLeftLineCoeficientsMeters = None
         self.lastRightLineCoeficientsMeters = None
-    def findFirstLaneLinesPixels (self, image, heighWindows = 80, distCenter = 75, minPix = 50, showWindows = True, paintLinePixels = True):
+    '''
+    def findFirstLaneLinesPixels(self, image, heighWindows = 80, distCenter = 75, minPix = 50, showWindows = True, paintLinePixels = True):
         # This function is similar to "find_lane_pixels" of the lesson "Advanced computer vision"
         # it gets the X and Y values of the pixels corresponding to the right and left lane lines.
         # It uses the slicing window method to diferentiate which pixels correspond to the left 
@@ -108,7 +110,7 @@ class LinesProcessing:
         
         return leftX, leftY, rightX, rightY, imgPixels
     
-    def findNewLaneLinePixels(self, image, coeffLastLeftLine, coeffLastRightLine, distCenter = 75, paintLinePixels = True):
+    def findNewLaneLinesPixels(self, image, coeffLastLeftLine, coeffLastRightLine, distCenter = 75, paintLinePixels = True):
         # This function is similar to "findFirstLaneLinesPixels", but it finds the new pixel values 
         # based on the last found lines, or better said, based on their polynom coeficients.
         # It gets the X and Y values of the pixels corresponding to the right and left lane lines.
@@ -159,8 +161,12 @@ class LinesProcessing:
             leftLineCoeficients = np.polyfit(leftY, leftX, 2)
             rightLineCoeficients = np.polyfit(rightY, rightX, 2)
         except TypeError:
+            '''
             leftLineCoeficients = self.lastLeftLineCoeficients
             rightLineCoeficients = self.lastRightLineCoeficients
+            '''
+            leftLineCoeficients = np.array([0,0,0])
+            rightLineCoeficients = np.array([0,0,0])
         
         # Creates a copy of the input image where the lines will be drawn
         imageLines = image.copy()
@@ -171,8 +177,10 @@ class LinesProcessing:
         leftLineX = leftLineCoeficients[0]*linesY**2 + leftLineCoeficients[1]*linesY + leftLineCoeficients[2]
         rightLineX = rightLineCoeficients[0]*linesY**2 + rightLineCoeficients[1]*linesY + rightLineCoeficients[2]
         
+        '''
         self.lastLeftLineCoeficients = leftLineCoeficients
         self.lastRightLineCoeficients = rightLineCoeficients
+        '''
 
         if drawLines == True:
             for i in range(0, image.shape[0] - 1):
@@ -213,8 +221,12 @@ class LinesProcessing:
             leftLineCoeficientsMeters = np.polyfit(leftY*Y_mPerPix, leftX*X_mPerPix, 2)
             rightLineCoeficientsMeters = np.polyfit(rightY*Y_mPerPix, rightX*X_mPerPix, 2)
         except TypeError:
+            '''
             leftLineCoeficientsMeters = self.lastLeftLineCoeficientsMeters
             rightLineCoeficientsMeters = self.lastRightLineCoeficientsMeters
+            '''
+            leftLineCoeficientsMeters = np.array([0,0,0])
+            rightLineCoeficientsMeters = np.array([0,0,0])
         
         return leftLineCoeficientsMeters, rightLineCoeficientsMeters
     

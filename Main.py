@@ -690,13 +690,13 @@ imgTest123_leftCoeff = (3*imgTest2_leftCoeff + imgTest1_leftCoeff + imgTest3_lef
 imgTest123_rightCoeff = (3*imgTest2_rightCoeff + imgTest1_rightCoeff + imgTest3_rightCoeff)/5
 
 # Then, the lane line pixels are calculated
-imgTest1_linePixels_return = linesProc.findNewLaneLinePixels(imgTest1_binWarped, imgTest123_leftCoeff, imgTest123_rightCoeff, 
+imgTest1_linePixels_return = linesProc.findNewLaneLinesPixels(imgTest1_binWarped, imgTest123_leftCoeff, imgTest123_rightCoeff, 
                                                              paintLinePixels = True, distCenter = 50)
 imgTest1_LeftX2, imgTest1_LeftY2, imgTest1_RightX2, imgTest1_RightY2, imgTest1_LinePixels2 = imgTest1_linePixels_return
-imgTest2_linePixels_return = linesProc.findNewLaneLinePixels(imgTest2_binWarped, imgTest123_leftCoeff, imgTest123_rightCoeff, 
+imgTest2_linePixels_return = linesProc.findNewLaneLinesPixels(imgTest2_binWarped, imgTest123_leftCoeff, imgTest123_rightCoeff, 
                                                              paintLinePixels = True, distCenter = 50)
 imgTest2_LeftX2, imgTest2_LeftY2, imgTest2_RightX2, imgTest2_RightY2, imgTest2_LinePixels2 = imgTest2_linePixels_return
-imgTest3_linePixels_return = linesProc.findNewLaneLinePixels(imgTest3_binWarped, imgTest123_leftCoeff, imgTest123_rightCoeff, 
+imgTest3_linePixels_return = linesProc.findNewLaneLinesPixels(imgTest3_binWarped, imgTest123_leftCoeff, imgTest123_rightCoeff, 
                                                              paintLinePixels = True, distCenter = 50)
 imgTest3_LeftX2, imgTest3_LeftY2, imgTest3_RightX2, imgTest3_RightY2, imgTest3_LinePixels2 = imgTest3_linePixels_return
 
@@ -867,6 +867,42 @@ Now let's recapitulate what are the steps of the pipeline:
 # exec(open('ProcessVideo.py').read())
 # Let's try the pipeline with the images test4.jpg, test5.jpg and test6.jpg
 
+def getStartLaneLines(image, camMatrix, distCoeff, warpParameters, gradXLThresh = (35, 180), SThresh = (180, 250)):
+    # Undistort the image using the function "UndistortImage" of "Camera" and the camera matrix and distortion coeficients obtained with 
+    # the camera calibration.
+    undistImg = cam.UndistortImage(image, camMatrix, distCoeff)
+    # Obtain a binary image of the undistorted image by calculating the gradient in direction X of its L color channel using the function 
+    # "GradientCalc" of the class "BinaryImg".
+    binImgGradX_Lch = binImg.GradientCalc(undistImg, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', kernelSize = 3, thresh = gradXLThresh)
+    # Obtain a binary image of the undistorted image by thresholding its S color channel using the function "HSLBinary" of the class "BinaryImg".
+    binImg_Sch = binImg.HSLBinary(undistImg, imgChannel = 's', thresh = SThresh)
+    # Combine both binary images with the function "CombineBinaries" of the class "BinaryImg"
+    binImage = binImg.CombineBinaries(binImgGradX_Lch, binImg_Sch)
+    # Warp the combined binary image into a "bird view" image with the function "WarpPolygonToSquare" of the class "Camera" using the polygon parameters
+    # calculated with the function "hough_lines" created for the first project.
+    binWarpedImage = cam.WarpPolygonToSquare(binImage, warpParameters[0], warpParameters[1], warpParameters[2], 
+                                             warpParameters[3], warpParameters[4], warpParameters[5])
+    # Get the lane lines pixels from the warped binary image using the function "findFirstLaneLinesPixels" of the class "LinesProcessing". Paints the left
+    # line pixels blue and the right line pixels red
+    LeftX, LeftY, RightX, RightY, pixelsBinWarpedImage = linesProc.findFirstLaneLinesPixels(binWarpedImage, showWindows = False, paintLinePixels = True)
+    # Get the coeficients of second grade polynoms which defines the lines with the function "getLines" of the class "LinesProcessing". If wanted draws
+    # the lane lines and/or the lane into the image.
+    leftCoef, rightCoef, laneBinWarpedImage = linesProc.getLines(pixelsBinWarpedImage,LeftX,LeftY,RightX,RightY, drawLines = True, drawLane = True)
+    # Get the coeficients of second grade polynoms which defines the lines in real measurement units with the function "getMeterPolynoms" of the class
+    # "LinesProcessing" to be used in order to calculate the radius of curvature of the lines and the position of the car relative to the center.
+    leftCoefMetric, rightCoefMetric = linesProc.getMeterPolynoms(LeftX,LeftY,RightX,RightY)
+    # Calculate the radius of curvature of both lines using the function "calculateCurvatureMeters" of the class "LinesProcessing". 
+    radLeft, radRight = linesProc.calculateCurvatureMeters(leftCoefMetric, rightCoefMetric)
+    # Calculate the position of the car relative to the center of the image using the function "calculateVehiclePos" of the class "LinesProcessing".
+    posCar = linesProc.calculateVehiclePos(leftCoefMetric, rightCoefMetric)
+    # Unwarp the image with the lane lines and the line drawn on it with the function "UnwarpSquareToPolygon" of the class "Camera" using
+    # the same parameters used to warp the image on the step 5.
+    laneUnwarpedImage = cam.UnwarpSquareToPolygon(laneBinWarpedImage, warpParameters[0], warpParameters[1], warpParameters[2], 
+                                                  warpParameters[3], warpParameters[4], warpParameters[5])
+    # Overlap the unwarped image into the original undistorted image using the function "addDataToOriginal" of the class "LinesProcessing". It also
+    # prints the radius of curvature of both lines and the position of the car into the output image.
+    imageOutput = linesProc.addDataToOriginal(undistImg, laneUnwarpedImage, radLeft, radRight, posCar)
+
 wParameters = [y_horizon, 720, x_bottomLeft, x_topLeft, x_bottomRight, x_topRight]
 
 imgTest4out, leftCoef4, rightCoef4, radLeft4, radRight4, posCar4 = getStartLaneLines(imgTest4, matrix, dist, wParameters, gradXLThresh = (35, 180), SThresh = (180, 250))
@@ -889,4 +925,90 @@ plt.imsave("output_images/test6_output.jpg", imgTest6out, format = 'jpg')
 figure21.savefig('ImgsReport/21_OutputImages2')
 
 
+
+# %%% FRAME TO FRAME CHALLENGE VIDEO %%%%
+
+'''
+For the challenge video, the lines are not getting detected as they should because the street has some other elements which resemble lines. In order
+to get this better, the process of getting the binary image needs to be revised.
+Let's do all the pipeline for two frames of that video to see where it fails:
+'''
+
+from moviepy.editor import VideoFileClip
+clipChallenge = VideoFileClip('challenge_video.mp4')
+
+challengeFr1 = clipChallenge.get_frame(1)
+clipChallenge.save_frame('test_images/challengeFr1.jpg', t=1)
+challengeFr2 = clipChallenge.get_frame(4)
+clipChallenge.save_frame('test_images/challengeFr2.jpg', t=4)
+
+# Undistort
+challengeFr1ud = cam.UndistortImage(challengeFr1, matrix, dist)
+challengeFr2ud = cam.UndistortImage(challengeFr2, matrix, dist)
+
+# Get binary images
+challengeFr1GradX_Lch = binImg.GradientCalc(challengeFr1ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', kernelSize = 3, thresh = (35, 180))
+challengeFr1S_ch = binImg.HSLBinary(challengeFr1ud, imgChannel = 's', thresh = (180, 250))
+challengeFr2GradX_Lch = binImg.GradientCalc(challengeFr2ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', kernelSize = 3, thresh = (35, 180))
+challengeFr2S_ch = binImg.HSLBinary(challengeFr2ud, imgChannel = 's', thresh = (180, 250))
+
+challengeFr1binCombined = binImg.CombineBinariesBlueGreen(challengeFr1GradX_Lch, challengeFr1S_ch)
+challengeFr2binCombined = binImg.CombineBinariesBlueGreen(challengeFr2GradX_Lch, challengeFr2S_ch)
+
+figure22, fig22_axes = plt.subplots(2,2, figsize = (10, 5))
+figure22.tight_layout()
+figure22.suptitle('Binary images of two frames of "challenge_video.mp4"')
+fig22_axes[0,0].imshow(challengeFr1)
+fig22_axes[0,0].set_title('Frame at 1 [s]', fontsize = 10)
+fig22_axes[0,1].imshow(challengeFr1binCombined)
+fig22_axes[0,1].set_title('Binary image at 1 [s]', fontsize = 10)
+fig22_axes[1,0].imshow(challengeFr2)
+fig22_axes[1,0].set_title('Frame at 4 [s]', fontsize = 10)
+fig22_axes[1,1].imshow(challengeFr2binCombined)
+fig22_axes[1,1].set_title('Binary image at 4 [s]', fontsize = 10)
+plt.subplots_adjust(top = 0.9, bottom = 0.05)
+figure22.savefig('ImgsReport/22_BinaryImages2Frames')
+
+''' 
+It can be seen that the gradient on the X direction of the channel L detects some lines, but the channel S does not detect anything here. Also the lines
+of the gradient are incorrect. Lets decrease the threshold range of the gradient and increase the one of the S channel
+'''
+
+# %%
+
+# Get binary images
+challengeFr1GradX_Lch2 = binImg.GradientCalc(challengeFr1ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', kernelSize = 3, thresh = (30, 180))
+challengeFr1L_ch2 = binImg.HSLBinary(challengeFr1ud, imgChannel = 'l', thresh = (170, 255))
+challengeFr1S_ch2 = binImg.HSLBinary(challengeFr1ud, imgChannel = 's', thresh = (120, 250))
+
+challengeFr1GradX_Lch2_L = cv2.bitwise_and(challengeFr1GradX_Lch2, challengeFr1L_ch2)
+
+challengeFr2GradX_Lch2 = binImg.GradientCalc(challengeFr2ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', kernelSize = 3, thresh = (30, 180))
+challengeFr2L_ch2 = binImg.HSLBinary(challengeFr2ud, imgChannel = 'l', thresh = (170, 255))
+challengeFr2S_ch2 = binImg.HSLBinary(challengeFr2ud, imgChannel = 's', thresh = (120, 250))
+
+challengeFr2GradX_Lch2_L = cv2.bitwise_and(challengeFr2GradX_Lch2, challengeFr2L_ch2)
+
+challengeFr1binCombined2 = binImg.CombineBinariesBlueGreen(challengeFr1GradX_Lch2_L, challengeFr1S_ch2)
+challengeFr2binCombined2 = binImg.CombineBinariesBlueGreen(challengeFr2GradX_Lch2_L, challengeFr2S_ch2)
+
+figure23, fig23_axes = plt.subplots(2,2, figsize = (10, 5))
+figure23.tight_layout()
+figure23.suptitle('Binary images of two frames of "challenge_video.mp4" \n with parameters changed.')
+fig23_axes[0,0].imshow(challengeFr1)
+fig23_axes[0,0].set_title('Frame at 1 [s]', fontsize = 10)
+fig23_axes[0,1].imshow(challengeFr1binCombined2)
+fig23_axes[0,1].set_title('Binary image at 1 [s]', fontsize = 10)
+fig23_axes[1,0].imshow(challengeFr2)
+fig23_axes[1,0].set_title('Frame at 4 [s]', fontsize = 10)
+fig23_axes[1,1].imshow(challengeFr2binCombined2)
+fig23_axes[1,1].set_title('Binary image at 4 [s]', fontsize = 10)
+plt.subplots_adjust(top = 0.9, bottom = 0.05)
+figure23.savefig('ImgsReport/23_BinaryImages2FramesImproved')
+
+'''
+After a lot of test, I found out that the dark lines which are not street lines can be filtered from the gradient in the direction X by masking it only 
+taking the pixels with a high l value (180 to 255). Also the threshold range of the gradient in direction X of the L channel was increased to (10, 230) and 
+the threshold range of the S channel was increased to (100, 250)
+'''
 
