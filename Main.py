@@ -447,7 +447,7 @@ exec(open('HoughLines.py').read())
 imgStraightLines1bin =  binImg.CombineBinaries(strLines1BinHSLchLDirX, imgStrLin1UndistS_bin)
 
 # Now the vertices where we calculate the Hough lines
-y_horizon = 465
+y_horizon = 445
 y_bottom = imgStraightLines1bin.shape[0] - 50
 
 houghVertices = houghVertices(100, 550, 1200, 800, y_bottom, y_horizon)
@@ -644,6 +644,7 @@ Now let's try the functions "findFirstLaneLinesPixels" on the images "test1.jpg"
 
 # First, we need to create an object of type "LinesProcessing".
 linesProc = LinesProcessing()
+exec(open('ProcessLines.py').read())
 
 # Then, the lane line pixels are calculated
 imgTest1_LeftX, imgTest1_LeftY, imgTest1_RightX, imgTest1_RightY, imgTest1_LinePixels = linesProc.findFirstLaneLinesPixels(imgTest1_binWarped, showWindows = False,
@@ -655,11 +656,11 @@ imgTest3_LeftX, imgTest3_LeftY, imgTest3_RightX, imgTest3_RightY, imgTest3_LineP
 
 # Then the lines are calculated
 imgTest1_leftCoeff, imgTest1_rightCoeff, imgTest1_Lines = linesProc.getLines(imgTest1_LinePixels,imgTest1_LeftX,imgTest1_LeftY,imgTest1_RightX,
-                                                                            imgTest1_RightY, drawLines = True)
+                                                                            imgTest1_RightY, drawLines = True, drawLane = True)
 imgTest2_leftCoeff, imgTest2_rightCoeff, imgTest2_Lines = linesProc.getLines(imgTest2_LinePixels,imgTest2_LeftX,imgTest2_LeftY,imgTest2_RightX,
-                                                                            imgTest2_RightY, drawLines = True)
+                                                                            imgTest2_RightY, drawLines = True, drawLane = True)
 imgTest3_leftCoeff, imgTest3_rightCoeff, imgTest3_Lines = linesProc.getLines(imgTest3_LinePixels,imgTest3_LeftX,imgTest3_LeftY,imgTest3_RightX,
-                                                                            imgTest3_RightY, drawLines = True)
+                                                                            imgTest3_RightY, drawLines = True, drawLane = True)
 
 figure17, fig17_axes = plt.subplots(3,1, figsize=(5,10))
 figure17.tight_layout()
@@ -701,11 +702,11 @@ imgTest3_LeftX2, imgTest3_LeftY2, imgTest3_RightX2, imgTest3_RightY2, imgTest3_L
 
 # Then the lines are calculated
 imgTest1_leftCoeff2, imgTest1_rightCoeff2, imgTest1_Lines2 = linesProc.getLines(imgTest1_LinePixels2,imgTest1_LeftX2,imgTest1_LeftY2,imgTest1_RightX2,
-                                                                            imgTest1_RightY2, drawLines = True)
+                                                                            imgTest1_RightY2, drawLines = True, drawLane = True)
 imgTest2_leftCoeff2, imgTest2_rightCoeff2, imgTest2_Lines2 = linesProc.getLines(imgTest2_LinePixels2,imgTest2_LeftX2,imgTest2_LeftY2,imgTest2_RightX2,
-                                                                            imgTest2_RightY2, drawLines = True)
+                                                                            imgTest2_RightY2, drawLines = True, drawLane = True)
 imgTest3_leftCoeff2, imgTest3_rightCoeff2, imgTest3_Lines2 = linesProc.getLines(imgTest3_LinePixels2,imgTest3_LeftX2,imgTest3_LeftY2,imgTest3_RightX2,
-                                                                            imgTest3_RightY2, drawLines = True)
+                                                                            imgTest3_RightY2, drawLines = True, drawLane = True)
 
 figure18, fig18_axes = plt.subplots(3,2, figsize=(7,7))
 figure18.tight_layout()
@@ -742,7 +743,6 @@ the polynomic coeficients in metric measurement units. These coeficients are use
 to calculate the radius of curvature of the lines and the position of the car relative to the center of the image.
 
 Let's calculate these values for the images test1.jpg, test2.jpg and test3.jpg using the lines calculated without ponderation
-
 '''
 
 imgTest1_leftCoeffMetric, imgTest1_rightCoeffMetric = linesProc.getMeterPolynoms(imgTest1_LeftX,imgTest1_LeftY,imgTest1_RightX,imgTest1_RightY)
@@ -760,4 +760,133 @@ imgTest3_posCar = linesProc.calculateVehiclePos(imgTest3_leftCoeffMetric, imgTes
 print('Test1.jpg: Radius left: ', imgTest1_radLeft, ' [m] Radius right: ', imgTest1_radRight, ' [m] Car position: ', imgTest1_posCar, ' [m]')
 print('Test2.jpg: Radius left: ', imgTest2_radLeft, ' [m] Radius right: ', imgTest2_radRight, ' [m] Car position: ', imgTest2_posCar, ' [m]')
 print('Test3.jpg: Radius left: ', imgTest3_radLeft, ' [m] Radius right: ', imgTest3_radRight, ' [m] Car position: ', imgTest3_posCar, ' [m]')
+
+# %%%%%%%%%%%%%%%%%%%%%%% UNWARP IMAGE WITH LANE LINES DETECTED %%%%%%%%%%%
+
+'''
+In order to draw the lane lines into the original undistorted image, two changes where made. The function "getLines" of the class "LinesProcessing" was 
+extended in order to be able to draw a polygon, where the lane lines are located.
+Also the function "UnwarpSquareToPolygon" was added to the class "Camera" in order to unwarp the image where the lane lines are drawn. This image will then
+be added to the original unwarped image.
+
+Let's execute this for the images "test1.jpg", "test2.jpg" and "test3.jpg"
+'''
+
+imgTest1_laneLinesUnwarped = cam.UnwarpSquareToPolygon(imgTest1_Lines, y_horizon, imgTest1ud.shape[0], 
+                                                       x_bottomLeft, x_topLeft, x_bottomRight, x_topRight) 
+imgTest2_laneLinesUnwarped = cam.UnwarpSquareToPolygon(imgTest2_Lines, y_horizon, imgTest1ud.shape[0], 
+                                                       x_bottomLeft, x_topLeft, x_bottomRight, x_topRight) 
+imgTest3_laneLinesUnwarped = cam.UnwarpSquareToPolygon(imgTest3_Lines, y_horizon, imgTest1ud.shape[0], 
+                                                       x_bottomLeft, x_topLeft, x_bottomRight, x_topRight) 
+
+
+figure19, fig19_axes = plt.subplots(3,1, figsize=(5,10))
+figure19.tight_layout()
+figure19.suptitle('Unwarped lane lines ready to be drawn into the original image')
+fig19_axes[0].imshow(imgTest1_laneLinesUnwarped)
+fig19_axes[0].set_title('test1.jpg', fontsize = 10)
+fig19_axes[1].imshow(imgTest2_laneLinesUnwarped)
+fig19_axes[1].set_title('test2.jpg', fontsize = 10)
+fig19_axes[2].imshow(imgTest3_laneLinesUnwarped)
+fig19_axes[2].set_title('test3.jpg', fontsize = 10)
+plt.subplots_adjust(top = 0.9, bottom = 0)
+figure19.savefig('ImgsReport/19_UnwarpedLines')
+
+'''
+It can be seen that it works pretty well for the three images.
+
+Now, the last part of the pipeline. Combine this images with the original, including the radius of curvature and the position of the vehicle
+'''
+
+# %%%%%%%%%%%%%%%% ADD UNWARPED IMAGE WITH LANE ON IT TO THE ORIGINAL UNDISTORTED IMAGE %%%%%%%%%%%%%%%%%%
+
+'''
+In order to get the final image with the lane lines on it and the calculations, the function "addDataToOriginal" was added to the class "LinesProcessing".
+Let's try it with the 3 test images.
+'''
+
+# Only to update file
+exec(open('ProcessLines.py').read())
+linesProc = LinesProcessing()
+
+imgTest1out = linesProc.addDataToOriginal(imgTest1ud, imgTest1_laneLinesUnwarped, imgTest1_radLeft, imgTest1_radRight, imgTest1_posCar)
+imgTest2out = linesProc.addDataToOriginal(imgTest2ud, imgTest2_laneLinesUnwarped, imgTest2_radLeft, imgTest2_radRight, imgTest2_posCar)
+imgTest3out = linesProc.addDataToOriginal(imgTest3ud, imgTest3_laneLinesUnwarped, imgTest3_radLeft, imgTest3_radRight, imgTest3_posCar)
+
+figure20, fig20_axes = plt.subplots(3,1, figsize=(5,10))
+figure20.tight_layout()
+figure20.suptitle('Output images')
+fig20_axes[0].imshow(imgTest1out)
+fig20_axes[0].set_title('test1.jpg', fontsize = 10)
+fig20_axes[1].imshow(imgTest2out)
+fig20_axes[1].set_title('test2.jpg', fontsize = 10)
+fig20_axes[2].imshow(imgTest3out)
+fig20_axes[2].set_title('test3.jpg', fontsize = 10)
+plt.subplots_adjust(top = 0.9, bottom = 0)
+plt.imsave("output_images/test1_output.jpg", imgTest1out, format = 'jpg')
+plt.imsave("output_images/test2_output.jpg", imgTest2out, format = 'jpg')
+plt.imsave("output_images/test3_output.jpg", imgTest3out, format = 'jpg')
+figure20.savefig('ImgsReport/20_OutputImages')
+
+
+'''
+It can be seen that the lane lines are good identified in the three output images, indicating that the pipeline is ready and working well.
+'''
+
+# %%%%%%%%%%%%%%%%%%%%%%%% VALIDATION OF THE PIPELINE %%%%%%%%%%%%%%%%%%%%%%%%%
+
+'''
+Now let's recapitulate what are the steps of the pipeline:
+    1) Undistort the image using the function "UndistortImage" of "Camera" and the camera matrix and distortion coeficients obtained with 
+    the camera calibration.
+    2) Obtain a binary image of the undistorted image by calculating the gradient in direction X of its L color channel using the function 
+    "GradientCalc" of the class "BinaryImg". Default threshold range is (35,180)
+    3) Obtain a binary image of the undistorted image by thresholding its S color channel using the function "HSLBinary" of the class "BinaryImg".
+    Default threshold range is (180, 250)
+    4) Combine both binary images with the function "CombineBinaries" of the class "BinaryImg"
+    5) Warp the combined binary image into a "bird view" image with the function "WarpPolygonToSquare" of the class "Camera" using the polygon parameters
+    calculated with the function "hough_lines" created for the first project.
+    6) Get the lane lines pixels from the warped binary image using the function "findFirstLaneLinesPixels" of the class "LinesProcessing" if the first 
+    frame or an image is being processed. Use the function "findNewLaneLinesPixels" instead, if the lines were identified already on another frame 
+    or frames. If wanted, paints the left line pixels red and the right line pixels blue.
+    7) Get the coeficients of second grade polynoms which defines the lines with the function "getLines" of the class "LinesProcessing". If wanted draws
+    the lane lines and/or the lane into the image.
+    8) Get the coeficients of second grade polynoms which defines the lines in real measurement units with the function "getMeterPolynoms" of the class
+    "LinesProcessing" to be used in order to calculate the radius of curvature of the lines and the position of the car relative to the center.
+    9) Calculate the radius of curvature of both lines using the function "calculateCurvatureMeters" of the class "LinesProcessing". 
+    10) Calculate the position of the car relative to the center of the image using the function "calculateVehiclePos" of the class "LinesProcessing".
+    11) Unwarp the image with the lane lines and the line drawn on it with the function "UnwarpSquareToPolygon" of the class "Camera" using
+    the same parameters used to warp the image on the step 5.
+    12) Overlap the unwarped image into the original undistorted image using the function "addDataToOriginal" of the class "LinesProcessing". It also
+    prints the radius of curvature of both lines and the position of the car into the output image.
+    
+    Let's define here a function which does all the steps.
+'''
+
+
+# exec(open('ProcessVideo.py').read())
+# Let's try the pipeline with the images test4.jpg, test5.jpg and test6.jpg
+
+wParameters = [y_horizon, 720, x_bottomLeft, x_topLeft, x_bottomRight, x_topRight]
+
+imgTest4out, leftCoef4, rightCoef4, radLeft4, radRight4, posCar4 = getStartLaneLines(imgTest4, matrix, dist, wParameters, gradXLThresh = (35, 180), SThresh = (180, 250))
+imgTest5out, leftCoef5, rightCoef5, radLeft5, radRight5, posCar5 = getStartLaneLines(imgTest5, matrix, dist, wParameters, gradXLThresh = (35, 180), SThresh = (180, 250))
+imgTest6out, leftCoef6, rightCoef6, radLeft6, radRight6, posCar = getStartLaneLines(imgTest6, matrix, dist, wParameters, gradXLThresh = (35, 180), SThresh = (180, 250))
+
+figure21, fig21_axes = plt.subplots(3,1, figsize=(5,10))
+figure21.tight_layout()
+figure21.suptitle('Output images. Generalized pipeline')
+fig21_axes[0].imshow(imgTest4out)
+fig21_axes[0].set_title('test4.jpg', fontsize = 10)
+fig21_axes[1].imshow(imgTest5out)
+fig21_axes[1].set_title('test5.jpg', fontsize = 10)
+fig21_axes[2].imshow(imgTest6out)
+fig21_axes[2].set_title('test6.jpg', fontsize = 10)
+plt.subplots_adjust(top = 0.9, bottom = 0)
+plt.imsave("output_images/test4_output.jpg", imgTest4out, format = 'jpg')
+plt.imsave("output_images/test5_output.jpg", imgTest5out, format = 'jpg')
+plt.imsave("output_images/test6_output.jpg", imgTest6out, format = 'jpg')
+figure21.savefig('ImgsReport/21_OutputImages2')
+
+
 

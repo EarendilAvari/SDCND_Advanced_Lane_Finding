@@ -12,6 +12,11 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 class LinesProcessing:
+    def __init__(self):
+        self.lastLeftLineCoeficients = None
+        self.lastRightLineCoeficients = None
+        self.lastLeftLineCoeficientsMeters = None
+        self.lastRightLineCoeficientsMeters = None
     def findFirstLaneLinesPixels (self, image, heighWindows = 80, distCenter = 75, minPix = 50, showWindows = True, paintLinePixels = True):
         # This function is similar to "find_lane_pixels" of the lesson "Advanced computer vision"
         # it gets the X and Y values of the pixels corresponding to the right and left lane lines.
@@ -82,11 +87,13 @@ class LinesProcessing:
             # The centers of the windows are updated if there is enough points inside of them
             if (currPixInLeftWindow > minPix):
                 histLeftWindow = np.sum(image[winY_low:winY_high,winX_left_low:winX_left_high], axis = 0)
-                leftCurrMidPoint = leftCurrMidPoint - distCenter + np.argmax(histLeftWindow)
+                if len(histLeftWindow) > 0:
+                    leftCurrMidPoint = leftCurrMidPoint - distCenter + np.argmax(histLeftWindow)
         
             if (currPixInRightWindow > minPix):
                 histRightWindow = np.sum(image[winY_low:winY_high,winX_right_low:winX_right_high], axis = 0)
-                rightCurrMidPoint = rightCurrMidPoint - distCenter + np.argmax(histRightWindow)
+                if len(histRightWindow) > 0:
+                    rightCurrMidPoint = rightCurrMidPoint - distCenter + np.argmax(histRightWindow)
     
         # Extract left and right line pixel positions
         leftX = nonZeroX[leftLineInds]
@@ -144,41 +151,70 @@ class LinesProcessing:
         return leftX, leftY, rightX, rightY, imgPixels            
         
     
-    def getLines(self, image, leftX, leftY, rightX, rightY, drawLines = True):
+    def getLines(self, image, leftX, leftY, rightX, rightY, drawLines = True, drawLane = True):
         # Gets the coeficients of a second grade polynom defining the right and the left lines.
         # If desired, it draws the lines into the image
         
-        leftLineCoeficients = np.polyfit(leftY, leftX, 2)
-        rightLineCoeficients = np.polyfit(rightY, rightX, 2)
+        try: 
+            leftLineCoeficients = np.polyfit(leftY, leftX, 2)
+            rightLineCoeficients = np.polyfit(rightY, rightX, 2)
+        except TypeError:
+            leftLineCoeficients = self.lastLeftLineCoeficients
+            rightLineCoeficients = self.lastRightLineCoeficients
         
         # Creates a copy of the input image where the lines will be drawn
         imageLines = image.copy()
         
         linesY = np.linspace(0, image.shape[0]-1, image.shape[0])
         
-        try:
-            leftLineX = leftLineCoeficients[0]*linesY**2 + leftLineCoeficients[1]*linesY + leftLineCoeficients[2]
-            rightLineX = rightLineCoeficients[0]*linesY**2 + rightLineCoeficients[1]*linesY + rightLineCoeficients[2]
-        except TypeError:
-            # Avoids an error if `left` and `right_fit` are still none or incorrect
-            print('The function failed to fit a line!')
-            leftLineX = 1*linesY**2 + 1*linesY
-            rightLineX = 1*linesY**2 + 1*linesY
+
+        leftLineX = leftLineCoeficients[0]*linesY**2 + leftLineCoeficients[1]*linesY + leftLineCoeficients[2]
+        rightLineX = rightLineCoeficients[0]*linesY**2 + rightLineCoeficients[1]*linesY + rightLineCoeficients[2]
+        
+        self.lastLeftLineCoeficients = leftLineCoeficients
+        self.lastRightLineCoeficients = rightLineCoeficients
 
         if drawLines == True:
-            imageLines[np.int_(linesY), np.int_(leftLineX), 1:] = 255
-            imageLines[np.int_(linesY), np.int_(leftLineX) + 1, 1:] = 255
-            imageLines[np.int_(linesY), np.int_(leftLineX) - 1, 1:] = 255
-            imageLines[np.int_(linesY), np.int_(rightLineX), 1:] = 255
-            imageLines[np.int_(linesY), np.int_(rightLineX) + 1, 1:] = 255
-            imageLines[np.int_(linesY), np.int_(rightLineX) - 1, 1:] = 255
+            for i in range(0, image.shape[0] - 1):
+                if ((leftLineX[i] > 0) & (leftLineX[i] < image.shape[1] - 1)): 
+                    imageLines[np.int_(linesY[i]), np.int_(leftLineX[i]), 1:] = 255
+                    imageLines[np.int_(linesY[i]), np.int_(leftLineX[i]) + 1, 1:] = 255
+                    imageLines[np.int_(linesY[i]), np.int_(leftLineX[i]) - 1, 1:] = 255
+                if ((rightLineX[i] > 0) & (rightLineX[i] < image.shape[1] - 1)): 
+                    imageLines[np.int_(linesY[i]), np.int_(rightLineX[i]), 1:] = 255
+                    imageLines[np.int_(linesY[i]), np.int_(rightLineX[i]) + 1, 1:] = 255
+                    imageLines[np.int_(linesY[i]), np.int_(rightLineX[i]) - 1, 1:] = 255
+        
+        # If "drawLane" is true, the lane line gets drawn into the image. Feature which is useful when the image gets
+        # unwarped and overlaped to the original undistorted image
+        if drawLane == True:
+            # Creates an empty image where the lane will be drawn
+            imageLane = np.zeros_like(imageLines)
+            # Generates a polygon indicating where the lane is located
+            # leftLineBorder is an array of all the points (x,y) which belong to the left line organized upwards
+            leftLineBorder = np.array([np.transpose(np.vstack([leftLineX, linesY]))])
+            # rightLineBorder is an array of all the points (x,y) which belong to the right line, but this time organized downwards
+            rightLineBorder = np.array([np.flipud(np.transpose(np.vstack([rightLineX, linesY])))])
+            # lanePoints is an array of all the points which define the polygon drawing the lane
+            lanePoints = np.hstack((leftLineBorder, rightLineBorder))
             
-        return leftLineCoeficients, rightLineCoeficients, imageLines
+            # Draws the lane into the blank image created before
+            cv2.fillPoly(imageLane, np.int_([lanePoints]), (0,255,0))
+            # Adds the image to the one meant to be returned
+            imageLaneAndLines = cv2.addWeighted(imageLines, 1, imageLane, 0.5, 0)
+        else:
+            imageLaneAndLines = imageLines
+            
+        return leftLineCoeficients, rightLineCoeficients, imageLaneAndLines
     
     def getMeterPolynoms(self, leftX, leftY, rightX, rightY, X_mPerPix = (3.7/700), Y_mPerPix = (30/720)):
         # Gets the polynomic coeficients of the lane lines in metric values
-        leftLineCoeficientsMeters = np.polyfit(leftY*Y_mPerPix, leftX*X_mPerPix, 2)
-        rightLineCoeficientsMeters = np.polyfit(rightY*Y_mPerPix, rightX*X_mPerPix, 2)
+        try:
+            leftLineCoeficientsMeters = np.polyfit(leftY*Y_mPerPix, leftX*X_mPerPix, 2)
+            rightLineCoeficientsMeters = np.polyfit(rightY*Y_mPerPix, rightX*X_mPerPix, 2)
+        except TypeError:
+            leftLineCoeficientsMeters = self.lastLeftLineCoeficientsMeters
+            rightLineCoeficientsMeters = self.lastRightLineCoeficientsMeters
         
         return leftLineCoeficientsMeters, rightLineCoeficientsMeters
     
@@ -201,5 +237,22 @@ class LinesProcessing:
         
         return Xcar
         
+    def addDataToOriginal(self, originalImage, laneLinesImage, leftLineRad, rightLineRad, posCar):
+        outputImage = cv2.addWeighted(originalImage, 1, laneLinesImage, 0.8, 0)
+        stringLeftLineRad = "Left line radius: " + str(round(leftLineRad,2))
+        stringRightLineRad = "Right line radius: " + str(round(rightLineRad,2))
+        if posCar > 0:
+            stringPosCar = "The car is " + str(abs(round(posCar,2))) + " m to the right"
+        elif posCar < 0:
+            stringPosCar = "The car is " + str(abs(round(posCar,2))) + " m to the left"
+        elif posCar == 0:
+            stringPosCar = "The car is at the center"
+        
+        # Prints the variables to the image in white text
+        cv2.putText(outputImage, stringLeftLineRad, (20, 40), cv2.FONT_HERSHEY_DUPLEX, 1.5, (255,255,255))
+        cv2.putText(outputImage, stringRightLineRad, (20, 100), cv2.FONT_HERSHEY_DUPLEX, 1.5, (255,255,255))
+        cv2.putText(outputImage, stringPosCar, (20, 160), cv2.FONT_HERSHEY_DUPLEX, 1.5, (255,255,255))
+        
+        return outputImage
     
 

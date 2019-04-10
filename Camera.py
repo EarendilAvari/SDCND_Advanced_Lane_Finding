@@ -78,7 +78,27 @@ class Camera:
         
         return warpedImg
     
+    def UnwarpSquareToPolygon(self, image, y_top, y_bottom, x_leftBottom, x_leftTop, x_rightBottom, x_rightTop):
+        orgImagePointLeftBottom = (300, image.shape[0])
+        orgImagePointLeftTop = (300, 0)
+        orgImagePointRightBottom = (image.shape[1] - 300, image.shape[0])
+        orgImagePointRightTop = (image.shape[1] - 300, 0)
+        destImagePointLeftBottom = (x_leftBottom, y_bottom)
+        destImagePointLeftTop = (x_leftTop, y_top)
+        destImagePointRightBottom = (x_rightBottom, y_bottom)
+        destImagePointRightTop = (x_rightTop, y_top)
         
+        orgPoints = np.float32([orgImagePointLeftBottom, orgImagePointLeftTop, orgImagePointRightTop, orgImagePointRightBottom])
+        destPoints = np.float32([destImagePointLeftBottom, destImagePointLeftTop, destImagePointRightTop, destImagePointRightBottom])
+        
+        # It gets the transformation matrix using the OpenCV function getPerspectiveTransform
+        transMatrix = cv2.getPerspectiveTransform(orgPoints, destPoints)
+        # It transforms the image using the transformation matrix and the OpenCV function warpPerspective
+        unwarpedImg = cv2.warpPerspective(image, transMatrix, (image.shape[1], image.shape[0]), flags = cv2.INTER_LINEAR)
+        
+        return unwarpedImg
+    
+    
             
 
 
