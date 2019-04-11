@@ -215,6 +215,71 @@ class LinesProcessing:
             
         return leftLineCoeficients, rightLineCoeficients, imageLaneAndLines
     
+    def getPolynoms(self, leftX, leftY, rightX, rightY):
+        # Gets the coeficients of a second grade polynom defining the right and the left lines.
+        
+        try: 
+            leftLineCoeficients = np.polyfit(leftY, leftX, 2)
+            rightLineCoeficients = np.polyfit(rightY, rightX, 2)
+        except TypeError:
+            '''
+            leftLineCoeficients = self.lastLeftLineCoeficients
+            rightLineCoeficients = self.lastRightLineCoeficients
+            '''
+            leftLineCoeficients = np.array([0,0,0])
+            rightLineCoeficients = np.array([0,0,0])
+            
+        return leftLineCoeficients, rightLineCoeficients
+    
+    def drawLinesAndLane(self, image, leftLineCoeficients, rightLineCoeficients, drawLines = True, drawLane = True):
+        # Creates a copy of the input image where the lines will be drawn
+        imageLines = image.copy()
+        
+        linesY = np.linspace(0, image.shape[0]-1, image.shape[0])
+        
+
+        leftLineX = leftLineCoeficients[0]*linesY**2 + leftLineCoeficients[1]*linesY + leftLineCoeficients[2]
+        rightLineX = rightLineCoeficients[0]*linesY**2 + rightLineCoeficients[1]*linesY + rightLineCoeficients[2]
+        
+        '''
+        self.lastLeftLineCoeficients = leftLineCoeficients
+        self.lastRightLineCoeficients = rightLineCoeficients
+        '''
+
+        if drawLines == True:
+            for i in range(0, image.shape[0] - 1):
+                if ((leftLineX[i] > 0) & (leftLineX[i] < image.shape[1] - 1)): 
+                    imageLines[np.int_(linesY[i]), np.int_(leftLineX[i]), 1:] = 255
+                    imageLines[np.int_(linesY[i]), np.int_(leftLineX[i]) + 1, 1:] = 255
+                    imageLines[np.int_(linesY[i]), np.int_(leftLineX[i]) - 1, 1:] = 255
+                if ((rightLineX[i] > 0) & (rightLineX[i] < image.shape[1] - 1)): 
+                    imageLines[np.int_(linesY[i]), np.int_(rightLineX[i]), 1:] = 255
+                    imageLines[np.int_(linesY[i]), np.int_(rightLineX[i]) + 1, 1:] = 255
+                    imageLines[np.int_(linesY[i]), np.int_(rightLineX[i]) - 1, 1:] = 255
+        
+        # If "drawLane" is true, the lane line gets drawn into the image. Feature which is useful when the image gets
+        # unwarped and overlaped to the original undistorted image
+        if drawLane == True:
+            # Creates an empty image where the lane will be drawn
+            imageLane = np.zeros_like(imageLines)
+            # Generates a polygon indicating where the lane is located
+            # leftLineBorder is an array of all the points (x,y) which belong to the left line organized upwards
+            leftLineBorder = np.array([np.transpose(np.vstack([leftLineX, linesY]))])
+            # rightLineBorder is an array of all the points (x,y) which belong to the right line, but this time organized downwards
+            rightLineBorder = np.array([np.flipud(np.transpose(np.vstack([rightLineX, linesY])))])
+            # lanePoints is an array of all the points which define the polygon drawing the lane
+            lanePoints = np.hstack((leftLineBorder, rightLineBorder))
+            
+            # Draws the lane into the blank image created before
+            cv2.fillPoly(imageLane, np.int_([lanePoints]), (0,255,0))
+            # Adds the image to the one meant to be returned
+            imageLaneAndLines = cv2.addWeighted(imageLines, 0.5, imageLane, 1, 0)
+        else:
+            imageLaneAndLines = imageLines
+            
+        return imageLaneAndLines
+        
+    
     def getMeterPolynoms(self, leftX, leftY, rightX, rightY, X_mPerPix = (3.7/700), Y_mPerPix = (30/720)):
         # Gets the polynomic coeficients of the lane lines in metric values
         try:
@@ -250,7 +315,7 @@ class LinesProcessing:
         return Xcar
         
     def addDataToOriginal(self, originalImage, laneLinesImage, leftLineRad, rightLineRad, posCar):
-        outputImage = cv2.addWeighted(originalImage, 1, laneLinesImage, 0.8, 0)
+        outputImage = cv2.addWeighted(originalImage, 1, laneLinesImage, 0.4, 0)
         stringLeftLineRad = "Left line radius: " + str(round(leftLineRad,2))
         stringRightLineRad = "Right line radius: " + str(round(rightLineRad,2))
         if posCar > 0:

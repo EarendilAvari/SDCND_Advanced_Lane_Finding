@@ -447,7 +447,7 @@ exec(open('HoughLines.py').read())
 imgStraightLines1bin =  binImg.CombineBinaries(strLines1BinHSLchLDirX, imgStrLin1UndistS_bin)
 
 # Now the vertices where we calculate the Hough lines
-y_horizon = 445
+y_horizon = 460
 y_bottom = imgStraightLines1bin.shape[0] - 50
 
 houghVertices = houghVertices(100, 550, 1200, 800, y_bottom, y_horizon)
@@ -902,6 +902,8 @@ def getStartLaneLines(image, camMatrix, distCoeff, warpParameters, gradXLThresh 
     # Overlap the unwarped image into the original undistorted image using the function "addDataToOriginal" of the class "LinesProcessing". It also
     # prints the radius of curvature of both lines and the position of the car into the output image.
     imageOutput = linesProc.addDataToOriginal(undistImg, laneUnwarpedImage, radLeft, radRight, posCar)
+    
+    return imageOutput
 
 wParameters = [y_horizon, 720, x_bottomLeft, x_topLeft, x_bottomRight, x_topRight]
 
@@ -977,15 +979,15 @@ of the gradient are incorrect. Lets decrease the threshold range of the gradient
 # %%
 
 # Get binary images
-challengeFr1GradX_Lch2 = binImg.GradientCalc(challengeFr1ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', kernelSize = 3, thresh = (30, 180))
-challengeFr1L_ch2 = binImg.HSLBinary(challengeFr1ud, imgChannel = 'l', thresh = (170, 255))
-challengeFr1S_ch2 = binImg.HSLBinary(challengeFr1ud, imgChannel = 's', thresh = (120, 250))
+challengeFr1GradX_Lch2 = binImg.GradientCalc(challengeFr1ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', kernelSize = 3, thresh = (10, 230))
+challengeFr1L_ch2 = binImg.HSLBinary(challengeFr1ud, imgChannel = 'l', thresh = (180, 255))
+challengeFr1S_ch2 = binImg.HSLBinary(challengeFr1ud, imgChannel = 's', thresh = (100, 250))
 
 challengeFr1GradX_Lch2_L = cv2.bitwise_and(challengeFr1GradX_Lch2, challengeFr1L_ch2)
 
-challengeFr2GradX_Lch2 = binImg.GradientCalc(challengeFr2ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', kernelSize = 3, thresh = (30, 180))
-challengeFr2L_ch2 = binImg.HSLBinary(challengeFr2ud, imgChannel = 'l', thresh = (170, 255))
-challengeFr2S_ch2 = binImg.HSLBinary(challengeFr2ud, imgChannel = 's', thresh = (120, 250))
+challengeFr2GradX_Lch2 = binImg.GradientCalc(challengeFr2ud, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', kernelSize = 3, thresh = (10, 230))
+challengeFr2L_ch2 = binImg.HSLBinary(challengeFr2ud, imgChannel = 'l', thresh = (180, 255))
+challengeFr2S_ch2 = binImg.HSLBinary(challengeFr2ud, imgChannel = 's', thresh = (100, 250))
 
 challengeFr2GradX_Lch2_L = cv2.bitwise_and(challengeFr2GradX_Lch2, challengeFr2L_ch2)
 
@@ -1007,7 +1009,7 @@ plt.subplots_adjust(top = 0.9, bottom = 0.05)
 figure23.savefig('ImgsReport/23_BinaryImages2FramesImproved')
 
 '''
-After a lot of test, I found out that the dark lines which are not street lines can be filtered from the gradient in the direction X by masking it only 
+After a lot of testing, I found out that the dark lines which are not street lines can be filtered from the gradient in the direction X by masking it only 
 taking the pixels with a high l value (180 to 255). Also the threshold range of the gradient in direction X of the L channel was increased to (10, 230) and 
 the threshold range of the S channel was increased to (100, 250)
 '''
