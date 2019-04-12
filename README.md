@@ -31,14 +31,14 @@ Having the camera matrix and the distortion coeficients, any image can be undist
 
 One of the calibration images before and after the calibration can be seen here:
 
-![ Image1](/mnt/data/Udacity/Self_driving_car_engineer/Project2/My_project/ImgsReport/01_CalibImgAfterUndistort.png  "Camera calibration")
+![ Image1](./ImgsReport/01_CalibImgAfterUndistort.png  "Camera calibration")
 
 By displaying both images (undistorted and distorted) it can be seen how the undistorting processing worked on the camera. In the case of this camera, the original images are not that distorted, only in the edges a convex distortion can be seen, which is corrected on the undistorted image.
 
 #### Undistort street images
 The first step of the pipeline is to undistort the image of the street using the function "UndistortImage". 
 
-![ Image2](/mnt/data/Udacity/Self_driving_car_engineer/Project2/My_project/ImgsReport/02_straight_lines1_beforeAndAfterCalib.png  "Undistorted street image")
+![ Image2](./ImgsReport/02_straight_lines1_beforeAndAfterCalib.png  "Undistorted street image")
 
 By plotting this test image it can be seen that a little bit of the original image is missing on the undistorted image. Also some objects are bigger, but the difference is actually minimal.
 
@@ -87,7 +87,7 @@ This operation can be done with the OpenCV function "Sobel".
 
 A binary image can be created by selecting the pixels where the gradient is within a threshold range. In the next image, this is applied on the image "straight_lines1.jpg" after it being undistorted using the function "Sobel".
 
-![ Image3](/mnt/data/Udacity/Self_driving_car_engineer/Project2/My_project/ImgsReport/04_BinImgsGrayGradient.png "Undistorted street image")
+![ Image3](./ImgsReport/04_BinImgsGrayGradient.png "Undistorted street image")
 
 By showing all three images can be seen that the lines are better shown on the binary image created by taking the gradient in the X direction. The difference is not that big though. But the gradient in the X direction also sucesses better on filtering the other elements on the image.
 
@@ -95,7 +95,7 @@ Another approach is to create a binary image by calculating the gradient's direc
 
 $$ \Theta = \tan ^{-1} \Big ( \frac {g _{y}}{g _{x}} \Big ) $$
 
-![ Image4](/mnt/data/Udacity/Self_driving_car_engineer/Project2/My_project/ImgsReport/05_BinImgsGrayGradientDir.png "Undistorted street image")
+![ Image4](./ImgsReport/05_BinImgsGrayGradientDir.png "Undistorted street image")
 
 
 The binary image created by calculating the direction of the gradient shows a lot of noise, but with very good defined lines. This can be useful to mask another binary image, but it will not work as standalone binary image.
@@ -106,11 +106,11 @@ As said before, the gradient of an image needs to be calculated on a channel of 
 
 This can be done by exploring the HSL and HSV color spaces.
 
-![ Image5](/mnt/data/Udacity/Self_driving_car_engineer/Project2/My_project/ImgsReport/24_ColorSpaces.png "Color spaces")
+![ Image5](./ImgsReport/24_ColorSpaces.png "Color spaces")
 
 The HSL and HSV color spaces are other forms to represent an image as digital data different from the traditional RGB format. For this application the space HSL is more interesting, since we can make use of the component L which indicates the "Lightness" of a pixel. Let's see how the HSL components of our test image "straight_lines1.jpg" look like:
 
-![ Image6](/mnt/data/Udacity/Self_driving_car_engineer/Project2/My_project/ImgsReport/08_imgStraightLinesHSLGray.png "Color spaces")
+![ Image6](./ImgsReport/08_imgStraightLinesHSLGray.png "Color spaces")
 
 Note: here are the components shown as grayscale.
 
@@ -118,7 +118,7 @@ It can be seen that the component L is basically the same than a grayscale image
 
 The next figure shows binary images of "straight_lines1.jpg" in the direction X, Y and its magnitude using the different channels of the HSL color space.
 
-![ Image6](/mnt/data/Udacity/Self_driving_car_engineer/Project2/My_project/ImgsReport/06_BinImgsHSLGradient.png "Binary images with HSL")
+![ Image6](./ImgsReport/06_BinImgsHSLGradient.png "Binary images with HSL")
 
 By showing all the images received can be seen that the channel H is not usefull to draw the lines into the binary images, In it a lot of scenery is detected but the lines not. The channel S does a very good job by detecting the lines, but they are missing sometimes. There is not a big difference between taking the gradient in direction x, y or the magnitude.
 
@@ -126,7 +126,7 @@ On the other hand, the channel L does even a better job than the channel S by de
 
 Only to try, lets see what we get with the same settings but another theshold range
 
-![ Image7](/mnt/data/Udacity/Self_driving_car_engineer/Project2/My_project/ImgsReport/07_BinImgsHSLGradientOtherThreshold.png "Binary images with HSL 2")
+![ Image7](./ImgsReport/07_BinImgsHSLGradientOtherThreshold.png "Binary images with HSL 2")
 
 
 By increasing the threshold range, it gets more evident that the Channel L, with the gradient in the X direction is the best approach to detect the lines. 
@@ -137,7 +137,7 @@ This can be explained by thinking how the colorspace HSL works. The H component 
 
 Another good idea to create a binary image is to use the HSL components purely.
 
-![ Image8](/mnt/data/Udacity/Self_driving_car_engineer/Project2/My_project/ImgsReport/09_imgStraightLinesHSLBin.png "Binary images with HSL 2")
+![ Image8](./ImgsReport/09_imgStraightLinesHSLBin.png "Binary images with HSL 2")
 
 By showing the binary images created thresholding the HSL components can be seen how good the lines are detected by the L and S components. The L component finds still more pieces of the line, but also another parts of the image, so it would not be smart to use it as it is without applying gradient. Specially when the light is very strong, the L component could be very high everywhere, disturbing the line measurements a lot. In the S component with the selected threshold almost only the lines can be seen, so it seems viable to use it to detect the lines.
 
@@ -145,9 +145,9 @@ I defined as standard method to get the binary image as a combination between th
 
 Let's see how it works on other images:
 
-![ Image9](/mnt/data/Udacity/Self_driving_car_engineer/Project2/My_project/ImgsReport/10_AllTestImagesBin01.png "Binary images general")
+![ Image9](./ImgsReport/10_AllTestImagesBin01.png "Binary images general")
 
-![ Image10](/mnt/data/Udacity/Self_driving_car_engineer/Project2/My_project/ImgsReport/11_AllTestImagesBin02.png "Binary images general")
+![ Image10](./ImgsReport/11_AllTestImagesBin02.png "Binary images general")
 
 By applying both methods on all images, can be seen that the combination of both is a very good approach to get the lane lines. What does not get detected by the gradient in direction X of the L component, gets detected with the S component and viceversa. This method will be used to get the lane line points and after that the equations corresponding to the lane lines.
 
@@ -161,7 +161,7 @@ The next step in the lane line detection and measurement is to get a "bird view"
 
 By transforming "straight_lines1.jpg" to bird view using arbitrarly selected polygon vertices we get this:
 
-![ Image11](/mnt/data/Udacity/Self_driving_car_engineer/Project2/My_project/ImgsReport/12_StraightLines1_transformed.png "Warped 1")
+![ Image11](./ImgsReport/12_StraightLines1_transformed.png "Warped 1")
 
 As it can be seen in the images, the perspective transform is working well getting an image in "bird view" perspective. The problem is that the lines are not parallel as they should be. That is because the vertices of the selected polygon were selected very roughly. That the lines are parallel in the bird view image is very important in order to get good calculations after that. So it is needed to get the vertices of that polygon in a precise way.
 
@@ -169,11 +169,11 @@ Here is where the work in the first project can be very useful to calculate thos
 
 The values of the polygon calculated using this method are ytop = 460, ybottom = 720, xbottomleft = 207, xtopleft = 508, xbottomright = 1103, xtopright = 696. By warping the image again using this value we get this:
 
-![ Image12](/mnt/data/Udacity/Self_driving_car_engineer/Project2/My_project/ImgsReport/13_StraightLines1_transformed_corr.png "Warped 2")
+![ Image12](./ImgsReport/13_StraightLines1_transformed_corr.png "Warped 2")
 
 By using this method to find the vertices of the conversion polygon the lane lines in the converted image are completely paralel. What means that the conversion is now accurate and appropiate to be used. The best thing is, that this process is not needed in the pipeline, these vertices can be used for any image to convert it into bird view image, so they can be used as parameters within the pipeline.
 
-![ Image13](/mnt/data/Udacity/Self_driving_car_engineer/Project2/My_project/ImgsReport/14_TestImagesWarped.png "Warped 3")
+![ Image13](./ImgsReport/14_TestImagesWarped.png "Warped 3")
 
 By showing the three images and their warped version it can be seen how well this polygon does performing the transformation. In all the three
 images the lines stay parallel, which means that the conversion is valid and can be used for further analysis.
