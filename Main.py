@@ -672,7 +672,7 @@ fig17_axes[1].set_title('test2.jpg', fontsize = 10)
 fig17_axes[2].imshow(imgTest3_Lines)
 fig17_axes[2].set_title('test3.jpg', fontsize = 10)
 plt.subplots_adjust(top = 0.9, bottom = 0)
-figure17.savefig('ImgsReport/17_CalculatedLines1')
+# figure17.savefig('ImgsReport/17_CalculatedLines1')
 
 '''
 It can be seen that the functions work very well with these images, getting accurate curves. The only problem here seem to be that the lines are not 
@@ -702,11 +702,11 @@ imgTest3_LeftX2, imgTest3_LeftY2, imgTest3_RightX2, imgTest3_RightY2, imgTest3_L
 
 # Then the lines are calculated
 imgTest1_leftCoeff2, imgTest1_rightCoeff2, imgTest1_Lines2 = linesProc.getLines(imgTest1_LinePixels2,imgTest1_LeftX2,imgTest1_LeftY2,imgTest1_RightX2,
-                                                                            imgTest1_RightY2, drawLines = True, drawLane = True)
+                                                                            imgTest1_RightY2, drawLines = True, drawLane = False)
 imgTest2_leftCoeff2, imgTest2_rightCoeff2, imgTest2_Lines2 = linesProc.getLines(imgTest2_LinePixels2,imgTest2_LeftX2,imgTest2_LeftY2,imgTest2_RightX2,
-                                                                            imgTest2_RightY2, drawLines = True, drawLane = True)
+                                                                            imgTest2_RightY2, drawLines = True, drawLane = False)
 imgTest3_leftCoeff2, imgTest3_rightCoeff2, imgTest3_Lines2 = linesProc.getLines(imgTest3_LinePixels2,imgTest3_LeftX2,imgTest3_LeftY2,imgTest3_RightX2,
-                                                                            imgTest3_RightY2, drawLines = True, drawLane = True)
+                                                                            imgTest3_RightY2, drawLines = True, drawLane = False)
 
 figure18, fig18_axes = plt.subplots(3,2, figsize=(7,7))
 figure18.tight_layout()
@@ -724,7 +724,7 @@ fig18_axes[2,0].set_title('test3.jpg with filtering', fontsize = 10)
 fig18_axes[2,1].imshow(imgTest3_Lines)
 fig18_axes[2,1].set_title('test3.jpg without filtering', fontsize = 10)
 plt.subplots_adjust(top = 0.9, bottom = 0)
-figure18.savefig('ImgsReport/18_CalculatedLines2')
+# figure18.savefig('ImgsReport/18_CalculatedLines2')
 
 
 '''
@@ -782,7 +782,7 @@ imgTest3_laneLinesUnwarped = cam.UnwarpSquareToPolygon(imgTest3_Lines, y_horizon
 
 figure19, fig19_axes = plt.subplots(3,1, figsize=(5,10))
 figure19.tight_layout()
-figure19.suptitle('Unwarped lane lines ready to be drawn into the original image')
+figure19.suptitle('Unwarped lane lines ready to be drawn into \n the original image')
 fig19_axes[0].imshow(imgTest1_laneLinesUnwarped)
 fig19_axes[0].set_title('test1.jpg', fontsize = 10)
 fig19_axes[1].imshow(imgTest2_laneLinesUnwarped)
@@ -903,7 +903,7 @@ def getStartLaneLines(image, camMatrix, distCoeff, warpParameters, gradXLThresh 
     # prints the radius of curvature of both lines and the position of the car into the output image.
     imageOutput = linesProc.addDataToOriginal(undistImg, laneUnwarpedImage, radLeft, radRight, posCar)
     
-    return imageOutput
+    return imageOutput, leftCoef, rightCoef, radLeft, radRight, posCar
 
 wParameters = [y_horizon, 720, x_bottomLeft, x_topLeft, x_bottomRight, x_topRight]
 

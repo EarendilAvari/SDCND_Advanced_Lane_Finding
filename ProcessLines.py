@@ -316,8 +316,8 @@ class LinesProcessing:
         
     def addDataToOriginal(self, originalImage, laneLinesImage, leftLineRad, rightLineRad, posCar):
         outputImage = cv2.addWeighted(originalImage, 1, laneLinesImage, 0.4, 0)
-        stringLeftLineRad = "Left line radius: " + str(round(leftLineRad,2))
-        stringRightLineRad = "Right line radius: " + str(round(rightLineRad,2))
+        stringLeftLineRad = "Left line radius: " + str(round(leftLineRad,2)) + " m"
+        stringRightLineRad = "Right line radius: " + str(round(rightLineRad,2)) + " m"
         if posCar > 0:
             stringPosCar = "The car is " + str(abs(round(posCar,2))) + " m to the right"
         elif posCar < 0:
