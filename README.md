@@ -306,7 +306,7 @@ The selection of "good coefficients" is done for every line separately by the me
 
 The coefficients which are used by the function "findNewLaneLinesPixels" correspond to a weighed average, where the newer "good coefficients" weight more than the older ones. This is done using the equation:
 
-$$C_{best} = \sum_{n=0}^{19} (n-1)C_{good}[i]$$
+<a href="https://www.codecogs.com/eqnedit.php?latex=C_{best}&space;=&space;\sum_{n=0}^{19}&space;(n-1)C_{good}[i]" target="_blank"><img src="https://latex.codecogs.com/gif.latex?C_{best}&space;=&space;\sum_{n=0}^{19}&space;(n-1)C_{good}[i]" title="C_{best} = \sum_{n=0}^{19} (n-1)C_{good}[i]" /></a>
 
 This calculation is done for every line separately by the method "determineBestCoefs" of the class "line".
 
