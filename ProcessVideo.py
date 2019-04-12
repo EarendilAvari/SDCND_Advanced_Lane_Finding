@@ -127,7 +127,10 @@ def getLaneLinesEnhanced(image, camMatrix, distCoeff, warpParameters, leftLineOb
     
     resetSearch = False
     
-    if ((abs(leftCoef[0] - rightCoef[0]) > 1e-03) | (abs(leftCoef[1] - rightCoef[1]) > 1)):
+    if (((abs(leftCoef[0] - rightCoef[0]) > 1e-03) | (abs(leftCoef[1] - rightCoef[1]) > 1)) & 
+    (leftLineObj.lastCoefs[0] != 0) & (leftLineObj.lastCoefs[1] != 0) & (leftLineObj.lastCoefs[2] != 0) &
+    (rightLineObj.lastCoefs[0] != 0) & (rightLineObj.lastCoefs[1] != 0) & (rightLineObj.lastCoefs[1] != 0) & 
+    ((len(leftLineObj.listLastCoefs) > 5) & (len(rightLineObj.listLastCoefs) > 5))):
         getLaneLinesEnhanced.badLinesCounter += 1
         if (getLaneLinesEnhanced.badLinesCounter <= 30):
             leftCoef = leftLineObj.lastCoefs.copy()
@@ -223,6 +226,7 @@ def ProcessFrameEnhanced(image, matrix, dist, wParameters):
     strFrame = 'Frame: ' + str(ProcessFrameEnhanced.frameNumber)
     
     # The parameters for the normal video are gradXLThresh = (35, 180), LThresh = (0, 255) and SThresh = (180, 250)
+    # The parameters for the challenge video are gradXLThresh = (10, 180), LThresh = (190, 255), SThresh = (90, 250)
     
     outputFrame = getLaneLinesEnhanced(image, matrix, dist, wParameters, leftLine, rightLine, gradXLThresh = (35, 180), 
                                        LThresh = (0, 255), SThresh = (180, 250), frameNumber = ProcessFrameEnhanced.frameNumber)
@@ -278,7 +282,7 @@ pipelineLogger.close()
 
 
 # %%
-pipelineLogger = open("Pipeline_logger.txt", "a")
+pipelineLogger = open("Pipeline_logger.txt", "w")
 clip1 = VideoFileClip("challenge_video.mp4")
 # clip1 = VideoFileClip("test_videos/solidWhiteRight.mp4")
 white_clip = clip1.fl_image(ProcessImage) #NOTE: this function expects color images!!

@@ -139,7 +139,7 @@ strLines1BinGrayDir = binImg.GradientCalc(imgStraightLines1Undist, imgType = 'gr
 
 figure5, fig5_axes = plt.subplots(1, 2, figsize = (10, 5))
 figure5.tight_layout()
-figure5.suptitle('Binary images created with grayscale image and gradient direction. \nThreshold = (0.7 rad, 1.3 rad)')
+figure5.suptitle('Binary image created with grayscale image and gradients direction. \nThreshold = (0.7 rad, 1.3 rad)')
 fig5_axes[0].imshow(imgStraightLines1Undist)
 fig5_axes[0].set_title('Original Image')
 fig5_axes[1].imshow(strLines1BinGrayDir, cmap = 'gray')
@@ -188,7 +188,7 @@ plt.subplots_adjust(top = 0.9, bottom = 0.1)
 figure6.savefig('ImgsReport/06_BinImgsHSLGradient')
 
 '''
-By showing all the images received can be seen that the channel H is not usefull to draw the lines into the binary images, In it a lof of scenery is detected
+By showing all the images received can be seen that the channel H is not usefull to draw the lines into the binary images, In it a lot of scenery is detected
 but the lines not. The channel S does a very good job by detecting the lines, but they are missing sometimes. There is not a big difference between taking 
 the gradient in direction x, y or the magnitude.
 On the other hand, the channel L does even a better job than the channel S by detecting the lines, but it also detects some scenery. It must be remembered that
@@ -428,8 +428,8 @@ figure12.savefig('ImgsReport/12_StraightLines1_transformed')
 
 '''
 As it can be seen in the images, the perspective transform is working well getting an image in "bird view" perspective. The problem is
-that the lines are not paralel as they should be. That is because the vertices of the selected polygon were selected very roughly. That the 
-lines are paralel in the bird view image is very important in order to get good calculations after that. So it is needed to get the vertices
+that the lines are not parallel as they should be. That is because the vertices of the selected polygon were selected very roughly. That the 
+lines are parallel in the bird view image is very important in order to get good calculations after that. So it is needed to get the vertices
 of that polygon in a precise way.
 
 Here is where the work in the first project can be very useful to calculate those vertices. So we import from the first project functions 
