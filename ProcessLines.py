@@ -326,9 +326,9 @@ class LinesProcessing:
             stringPosCar = "The car is at the center"
         
         # Prints the variables to the image in white text
-        cv2.putText(outputImage, stringLeftLineRad, (20, 40), cv2.FONT_HERSHEY_DUPLEX, 1.5, (255,255,255))
-        cv2.putText(outputImage, stringRightLineRad, (20, 100), cv2.FONT_HERSHEY_DUPLEX, 1.5, (255,255,255))
-        cv2.putText(outputImage, stringPosCar, (20, 160), cv2.FONT_HERSHEY_DUPLEX, 1.5, (255,255,255))
+        cv2.putText(outputImage, stringLeftLineRad, (20, 40), cv2.FONT_HERSHEY_TRIPLEX, 1.5, (255,255,0))
+        cv2.putText(outputImage, stringRightLineRad, (20, 100), cv2.FONT_HERSHEY_TRIPLEX, 1.5, (255,255,0))
+        cv2.putText(outputImage, stringPosCar, (20, 160), cv2.FONT_HERSHEY_TRIPLEX, 1.5, (255,255,0))
         
         return outputImage
     

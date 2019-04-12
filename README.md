@@ -14,7 +14,15 @@ The computer vision concepts used on this project are:
 - Image gradients
 - Color spaces HSL and HSV
 
+Other general concepts of signal processing are used, like:
+
+- Signal feedback
+- Convolution
+- Interpolation of raw data
+
 ### Development process on images
+
+The development of this project was done firstly step by step on test images. The execution and plotting was done in the file "ProcessImages.py", while the different functions developed are located on the files "Camera.py", "BinaryImg.py" and "ProcessImages.py". All the development was done using the IDE Spyder.
 
 #### Camera calibration
 The first step in order to extract reliable data from images is to undistort the images taken from it. In order to do that the matrix of the camera and the distortion coeficients are needed. Both of them can be obtained doing a camera calibration process.
@@ -141,7 +149,7 @@ Another good idea to create a binary image is to use the HSL components purely.
 
 By showing the binary images created thresholding the HSL components can be seen how good the lines are detected by the L and S components. The L component finds still more pieces of the line, but also another parts of the image, so it would not be smart to use it as it is without applying gradient. Specially when the light is very strong, the L component could be very high everywhere, disturbing the line measurements a lot. In the S component with the selected threshold almost only the lines can be seen, so it seems viable to use it to detect the lines.
 
-I defined as standard method to get the binary image as a combination between the gradient in the L channel in the X direction and a thresholed version of the S channel
+I defined as standard method to get the binary image as a combination between the gradient in the L channel in the X direction and a thresholded version of the S channel
 
 Let's see how it works on other images:
 
@@ -193,12 +201,11 @@ In the case of this image, it can be seen that the left line gets detected longe
 
 Now it is time to calculate mathematically the lane lines by detecting their pixels on the warped binary images and then interpolate the lines. For that a new class was programmed and tested. The class "LinesProcessing" located in the file "ProcessLines.py", which contains the functions "findFirstLaneLinesPixels", "findNewLaneLinesPixels" and "getLines".
 
-The function "findFirstLaneLinesPixels" is meant to be used on the first frames of a video, or when the lines are completely lost. That is because it makes some very heavy computation, looping all the non zero pixels of the image for every pair of slicing windows. In the normal case this function should only be used for the first frames of a video. It receives as argument the binary perspective transformed image and it returns four arrays containing the position X and Y of the pixels which belong to the 
-right and the left line.
+The function "findFirstLaneLinesPixels" is meant to be used on the first frames of a video, or when the lines are completely lost. That is because it makes some very heavy computation, looping all the non zero pixels of the image for every pair of slicing windows. In the normal case this function should only be used for the first frames of a video. It receives as argument the binary perspective transformed image and it returns four arrays containing the position X and Y of the pixels which belong to the right and the left line.
 
-In order to detect the lines for a new frame after the lines were detected for the frame before, the function "findNewLaneLinesPixels" should be used. This function uses the polynom coeficients of the lines of the last frame (or an average of a bunch of frames) in order to get the lines of the current frame. It is way faster than the function "findFirstLaneLinesPixels" because it only contains one loop through all non zero pixels of the image. An interesting option is to use the average of the polynomic coeficients of the lines of the last n frames, weighing more the ones of the last frames, getting so more robust calculations
+In order to detect the lines for a new frame after the lines were detected for the frame before, the function "findNewLaneLinesPixels" should be used. This function uses the polynom coeficients of the lines of the last frame (or an average of a bunch of frames) in order to get the lines of the current frame. It is way faster than the function "findFirstLaneLinesPixels" because it only contains one loop through all non zero pixels of the image. An interesting option is to use the average of the polynomial coeficients of the lines of the last n frames, weighing more the ones of the last frames, getting so more robust calculations
 
-To get the mathematical equations of the lane lines, the function "getLines" is used. This function interpolates the lane lines points found with "findFirstLaneLinesPixels" or with "findNewLaneLinePixels". This function returns the polynomic coeficients of the two lines and the image with the calculated lines and/or the lane drawn on it, if wanted.  
+To get the mathematical equations of the lane lines, the function "getLines" is used. This function interpolates the lane lines points found with "findFirstLaneLinesPixels" or with "findNewLaneLinePixels". This function returns the polynomial coeficients of the two lines and the image with the calculated lines and/or the lane drawn on it, if wanted.  
 
 Now let's try the functions "findFirstLaneLinesPixels" on the images "test1.jpg", "test2.jpg" and "test3.jpg".
 
@@ -282,53 +289,90 @@ Now let's recapitulate what are the steps of the pipeline:
     12. Overlap the unwarped image into the original undistorted image using the function "addDataToOriginal" of the class "LinesProcessing". It also prints the radius of curvature of both lines and the position of the car into the output image.
 
 
-Let's define here a function which does all the steps.
-
-```
-def getStartLaneLines(image, camMatrix, distCoeff, warpParameters, gradXLThresh = (35, 180), SThresh = (180, 250)):
-    # Undistort the image using the function "UndistortImage" of "Camera" and the camera matrix and distortion coeficients obtained with 
-    # the camera calibration.
-    undistImg = cam.UndistortImage(image, camMatrix, distCoeff)
-    # Obtain a binary image of the undistorted image by calculating the gradient in direction X of its L color channel using the function 
-    # "GradientCalc" of the class "BinaryImg".
-    binImgGradX_Lch = binImg.GradientCalc(undistImg, imgType = 'HSL', imgChannel = 'l', calcType = 'dirX', kernelSize = 3, thresh = gradXLThresh)
-    # Obtain a binary image of the undistorted image by thresholding its S color channel using the function "HSLBinary" of the class "BinaryImg".
-    binImg_Sch = binImg.HSLBinary(undistImg, imgChannel = 's', thresh = SThresh)
-    # Combine both binary images with the function "CombineBinaries" of the class "BinaryImg"
-    binImage = binImg.CombineBinaries(binImgGradX_Lch, binImg_Sch)
-    # Warp the combined binary image into a "bird view" image with the function "WarpPolygonToSquare" of the class "Camera" using the polygon parameters
-    # calculated with the function "hough_lines" created for the first project.
-    binWarpedImage = cam.WarpPolygonToSquare(binImage, warpParameters[0], warpParameters[1], warpParameters[2], 
-                                             warpParameters[3], warpParameters[4], warpParameters[5])
-    # Get the lane lines pixels from the warped binary image using the function "findFirstLaneLinesPixels" of the class "LinesProcessing". Paints the left
-    # line pixels blue and the right line pixels red
-    LeftX, LeftY, RightX, RightY, pixelsBinWarpedImage = linesProc.findFirstLaneLinesPixels(binWarpedImage, showWindows = False, paintLinePixels = True)
-    # Get the coeficients of second grade polynoms which defines the lines with the function "getLines" of the class "LinesProcessing". If wanted draws
-    # the lane lines and/or the lane into the image.
-    leftCoef, rightCoef, laneBinWarpedImage = linesProc.getLines(pixelsBinWarpedImage,LeftX,LeftY,RightX,RightY, drawLines = True, drawLane = True)
-    # Get the coeficients of second grade polynoms which defines the lines in real measurement units with the function "getMeterPolynoms" of the class
-    # "LinesProcessing" to be used in order to calculate the radius of curvature of the lines and the position of the car relative to the center.
-    leftCoefMetric, rightCoefMetric = linesProc.getMeterPolynoms(LeftX,LeftY,RightX,RightY)
-    # Calculate the radius of curvature of both lines using the function "calculateCurvatureMeters" of the class "LinesProcessing". 
-    radLeft, radRight = linesProc.calculateCurvatureMeters(leftCoefMetric, rightCoefMetric)
-    # Calculate the position of the car relative to the center of the image using the function "calculateVehiclePos" of the class "LinesProcessing".
-    posCar = linesProc.calculateVehiclePos(leftCoefMetric, rightCoefMetric)
-    # Unwarp the image with the lane lines and the line drawn on it with the function "UnwarpSquareToPolygon" of the class "Camera" using
-    # the same parameters used to warp the image on the step 5.
-    laneUnwarpedImage = cam.UnwarpSquareToPolygon(laneBinWarpedImage, warpParameters[0], warpParameters[1], warpParameters[2], 
-                                                  warpParameters[3], warpParameters[4], warpParameters[5])
-    # Overlap the unwarped image into the original undistorted image using the function "addDataToOriginal" of the class "LinesProcessing". It also
-    # prints the radius of curvature of both lines and the position of the car into the output image.
-    imageOutput = linesProc.addDataToOriginal(undistImg, laneUnwarpedImage, radLeft, radRight, posCar)
-    
-    return imageOutput, leftCoef, rightCoef, radLeft, radRight, posCar
-```
+The function "getStartLaneLines" was defined which executes all of these steps. It can be found in the file "ProcessImages.py" starting at the line 870.
 
 And let's try it with 3 other images, "test4.jpg", "test5.jpg" and "test6.jpg"
 
 ![ Image20](./ImgsReport/21_OutputImages2.png "Output images")
 
 ### Deployment of the pipeline on videos
+#### Optimized pipeline
+
+After confirming that the pipeline works well on images, it was time to develop it for videos. At the beginning, it was tested only using the function "getStartLaneLines", without any optimization, applyied to the video "project_video.mp4", obtaining good results but being very slow, this first try took aproximatelly 16 minutes to complete.
+
+The first step in order to optimize the pipeline was to use the function "findNewLaneLinesPixels" instead of "findFirstLaneLinesPixels" when possible. This function uses the polynomial coefficients of the last iteration in order to do a more narrowed search of the lane lines pixels.
+
+But using only the coefficients of the very last frame would not be that good. Instead of that, I used a deque of the last 20 arrays of polynomial coefficients selected after passing some conditions. The reason for using a deque and not a list is because with the deque the oldest element can be deleted easilly and the other elements get reorganized automatically being pushed a position back within the deque.
+
+ The acceptance conditions for the polynomial coefficients are:
+- The radius of curvature of the line created on the frame with these coefficients need to be similar to the radius of curvature of the other line created on the frame with its respective coefficients. This assures that only coefficients get accepted which represent almost parallel right and left lines.
+- These coefficients need to be close to the average of good coefficients found before. The difference between the A coefficient and the A average needs to be smaller than 0.001, the difference between the B coefficient and the B average needs to be smaller than 1 and the difference between the C component and the C average needs to be smaller than 100. So it is assured that only coefficients get accepted, that are similar to the ones used before. 
+
+The selection of "good coefficients" is done for every line separately by the method "addNewCoeficients" of the class "line".
+
+The coefficients which are used by the function "findNewLaneLinesPixels" correspond to a weighed average, where the newer "good coefficients" weight more than the older ones. This is done using the equation:
+
+$$C_{best} = \sum_{n=0}^{19} (n-1)C_{good}[i]$$
+
+This calculation is done for every line separately by the method "determineBestCoefs" of the class "line".
+
+Also the function "getStartLaneLines" was extended to the function "getLaneLinesEnhanced" which is the definitive version of the pipeline.
+
+The definitive pipeline can be explained better with a block diagram:
+
+![ Image21](./ImgsReport/Pipeline_definitive.png "Output images")
+
+The enhanced pipeline takes approximately 8 minutes to process the video "project_video.mp4" which is two times faster than the first version of the pipeline. This pipeline can be found on the file "ProcessVideo.py".
+
+#### Change on the generation of binary image to process video "Challenge_video.mp4"
+
+In this video, it is a bit tricky to find the lane lines, because the street is very bright and it has some markings which resemble lane lines and are way easier to be detected than the actual lane lines. Using the pipeline as it was for "project_video.mp4" it failed completely to get the correct lane lines. 
+
+In order to analyse what was happening here, two frames of the video were selected to be analysed step by step. By getting the binary image as it was before, we obtain this:
+
+![ Image22](./ImgsReport/22_BinaryImages2Frames.png "Output images")
+
+It can be seen that the gradient on the X direction of the channel L detects some lines, but the channel S does not detect anything here. Also the lines of the gradient are incorrect. 
+
+Let's think a little bit about. what is happening here. Here the street is very bright, which means that the gradient in direction X applied on the channel L on the edges of the lane lines is lower than the gradient on the edges of those "fake lane lines". 
+
+The best option here seem to be, to mask the binary image obtained through the gradient in the X direction of the L channel using another binary image generated with the pure L channel. That is because, It is known that the L channel is higher on brighter elements, and since the "fake lane lines" are dark, their L component will be very low.  
+
+Applying a mask which only contains pixel values with L component higher than 190 filters those "fake lane lines". In order to detect the real lane lines, it is also needed to increase the gradient threshold from (30, 180) to (10, 180).
+
+The other issue is, that the S channel is not detecting anything. If we increase the threshold of the S channel from (180, 250) to (90, 250) the yellow line at the left side gets detected.
+
+Doing all these changes, the binary images of the selected frames look like this:
+
+![ Image23](./ImgsReport/23_BinaryImages2FramesImproved.png "Output images")
+
+On this image, both lane lines are good detected and the "fake lane lines" dissapear from the binary images. The sky is also detected by the channel S, but that is not important since it does not appear on the warped image where the lane lines are definitely calculated.
+
+By testing this on the video, it can be seen that it  works relatively good, but not at the level of the other video "project_video.mp4". This is because in the other video, a lot of pixels are being detected as part of the lines, but in this case, the quantity of pixels is way lower, which gets reflected on the very fast processing speed on this video (1 minute to process 16 seconds vs 8 minutes to process 50 seconds of the other video). 
+
+By looking at the datalog "challenge_video_output_LOG.txt", it can be seen that, for this video, the option to use the polynomial coefficients of the last frame when the calculated on the current frame are very different from each other is used a lot, but not that much in order to trigger a complete new search of the polynomial coefficients which happens if the polynomial coefficients are very different from each other for more than 30 consecutive frames. As comparison, in the case of the other video "project_video.mp4" this feature is never used because the polynomials are always within the range in which they can be different, this can be seen on its datalog "project_video_output_LOG.txt". Both videos and their datalogs can be found on the folder "output_videos".
+
+### Possible problems and future work
+In the case of "challenge_video.mp4" a relative good result was obtained, but it is far to be perfect. That is because so few pixels are found for the lines and therefore the lines are not that exact. For this video, the dark lines could be filtered successfully, but what happens if they would be as bright as the lane lines? The same issue from the beginning would happen since both lines would have similar L component.
+
+By comparing the results and the parameters used for both videos, it can be seen that they are VERY different from each other. Therefore a bunch of parameters which work on every possible case cannot be defined. Here some adaptative strategy is needed in order to change the parameters when the street or light conditions change, and this strategy needs to be reliable. 
+
+Also the size of the polygon used to warp and unwarp the image might need to be changed in order to adapt the pipeline to very curvy streets, like on the video "harder_challenge_video.mp4"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

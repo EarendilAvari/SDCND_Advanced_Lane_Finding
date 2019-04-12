@@ -24,7 +24,7 @@ coefsDiffLeft = []
 # Define a class to receive the characteristics of each line detection
 class Line():
     def __init__(self):
-        # Deque of the last 100 polynomic coeficients 
+        # Deque of the last 20 polynomic coeficients 
         self.listLastCoefs = deque()
         #polynomial coefficients averaged over the last n iterations
         self.bestCoefs = np.array([0,0,0], dtype='float')  
@@ -40,12 +40,6 @@ class Line():
         self.radiusCurvature = 0 
         #distance in meters of vehicle center from the line
         self.posCar = 0 
-        #Average of all the X points in the most recent frame
-        self.currentAverageX = 0
-        #Average of all the X points in the most recent frame
-        self.lastAverageX = 0
-        #All X values of the line in the last frame
-        self.lastXValues = None
         #difference in fit coefficients between last coeficients and best found coeficients
         self.coefsDiff = np.array([0,0,0], dtype='float') 
         #Quantity of frames where a line could not be fitted
@@ -102,42 +96,45 @@ def getLaneLinesEnhanced(image, camMatrix, distCoeff, warpParameters, leftLineOb
     # calculated with the function "hough_lines" created for the first project.
     binWarpedImage = cam.WarpPolygonToSquare(binImage, warpParameters[0], warpParameters[1], warpParameters[2], 
                                              warpParameters[3], warpParameters[4], warpParameters[5])
-    # Get the lane lines pixels from the warped binary image using the function "findFirstLaneLinesPixels" of the class "LinesProcessing". Paints the left
-    # line pixels blue and the right line pixels red
+    # Do the deques of "good" coefficients for both lines have more than 5 elements?
     if ((len(leftLineObj.listLastCoefs) > 5) & (len(rightLineObj.listLastCoefs) > 5)): 
+        # Get pixels of right and left lane lines based on the weighted average of the last good coeficients using "findNewLaneLinesPixels"
         coefsLastLeftLines = leftLineObj.bestCoefs
         coefsLastRightLines = rightLineObj.bestCoefs
         LeftX, LeftY, RightX, RightY, pixelsBinWarpedImage = linesProc.findNewLaneLinesPixels(binWarpedImage, coefsLastLeftLines, coefsLastRightLines,
                                                                                               distCenter = 75, paintLinePixels = True)
-        # ONLY FOR DEBUGGING
+        # DATALOG FOR DEBUGGING
         logString = 'Frame N°: ' + str(frameNumber) + ' findNewLaneLinesPixels used with last best coeficients\n'
         pipelineLogger.write(logString)
     else:
+        # Get pixels of right and left lane lines from the beginning using "findFirstLaneLinesPixels"
         LeftX, LeftY, RightX, RightY, pixelsBinWarpedImage = linesProc.findFirstLaneLinesPixels(binWarpedImage, showWindows = False, paintLinePixels = True)   
         logString = 'Frame N°: ' + str(frameNumber) + ' findFirstLaneLinesPixels used\n'
         pipelineLogger.write(logString)
     
-    # Get the coeficients of second grade polynoms which defines the lines with the function "getLines" of the class "LinesProcessing". If wanted draws
-    # the lane lines and/or the lane into the image.
+    # Get polynomial coefficients based on the lane lines pixels found using "getPolynoms"
     leftCoef, rightCoef = linesProc.getPolynoms(LeftX,LeftY,RightX,RightY)
+    
     # Get the coeficients of second grade polynoms which defines the lines in real measurement units with the function "getMeterPolynoms" of the class
     # "LinesProcessing" to be used in order to calculate the radius of curvature of the lines and the position of the car relative to the center.
-    
     leftCoefMetric, rightCoefMetric = linesProc.getMeterPolynoms(LeftX,LeftY,RightX,RightY)
     
     resetSearch = False
     
+    # If the calculated polynomial coefficients of the right line are too different of the ones of the left line and if the coefficients of the 
+    # last frame are not 0 (it is not the very first frame) and the search close to last best line was performed (findNewLaneLinesPixels) used    
     if (((abs(leftCoef[0] - rightCoef[0]) > 1e-03) | (abs(leftCoef[1] - rightCoef[1]) > 1)) & 
     (leftLineObj.lastCoefs[0] != 0) & (leftLineObj.lastCoefs[1] != 0) & (leftLineObj.lastCoefs[2] != 0) &
     (rightLineObj.lastCoefs[0] != 0) & (rightLineObj.lastCoefs[1] != 0) & (rightLineObj.lastCoefs[1] != 0) & 
     ((len(leftLineObj.listLastCoefs) > 5) & (len(rightLineObj.listLastCoefs) > 5))):
         getLaneLinesEnhanced.badLinesCounter += 1
+        # If this did not happen in more than 30 frames consecutively
         if (getLaneLinesEnhanced.badLinesCounter <= 30):
             leftCoef = leftLineObj.lastCoefs.copy()
             leftCoefMetric = leftLineObj.lastMetricCoefs.copy()
             rightCoef = rightLineObj.lastCoefs.copy()
             rightCoefMetric = rightLineObj.lastMetricCoefs.copy()
-            logString = 'Frame N°: ' + str(frameNumber) + ', Coeficients for both lines of last frame used because a new line would be too different of the last one\n'
+            logString = 'Frame N°: ' + str(frameNumber) + ', Coeficients for both lines of last frame used because new lines are too different from each other\n'
             pipelineLogger.write(logString)
         else:
             getLaneLinesEnhanced.badLinesCounter = 0
@@ -146,7 +143,7 @@ def getLaneLinesEnhanced(image, camMatrix, distCoeff, warpParameters, leftLineOb
             pipelineLogger.write(logString)
     else:
         getLaneLinesEnhanced.badLinesCounter = 0
-    
+    # The function "getPolynoms" or "getMeterPolynoms" could not find a polynom for the left line
     if ((leftCoef[0] == 0) | (leftCoef[1] == 0) | (leftCoefMetric[0] == 0) | (leftCoefMetric[1] == 0)):
         leftLineObj.linesNotFoundQt += 1
         if (leftLineObj.linesNotFoundQt > 5):
@@ -162,6 +159,7 @@ def getLaneLinesEnhanced(image, camMatrix, distCoeff, warpParameters, leftLineOb
     else:
         leftLineObj.linesNotFoundQt = 0
     
+    # # The function "getPolynoms" or "getMeterPolynoms" could not find a polynom for the right line
     if ((rightCoef[0] == 0) | (rightCoef[1] == 0) | (rightCoefMetric[0] == 0) | (rightCoefMetric[1] == 0)):
         rightLineObj.linesNotFoundQt += 1
         if (rightLineObj.linesNotFoundQt > 5):
@@ -179,7 +177,9 @@ def getLaneLinesEnhanced(image, camMatrix, distCoeff, warpParameters, leftLineOb
           
     laneBinWarpedImage = linesProc.drawLinesAndLane(pixelsBinWarpedImage, leftCoef, rightCoef, drawLines = False, drawLane = True)    
     
-    # If resetSearch is true, search the pixels from the beginning again on the same frame:
+    # If resetSearch is true, Restart the search of lane lines pixels from the beginning using "findFirstLaneLinesPixels". 
+    # Get polynomial coefficients and draw lines with "getLines". Get metric polynomial coefficients using "getMeterPolynoms". 
+    # Delete all elements of the deques of "good" coefficients
     if resetSearch == True:
         LeftX, LeftY, RightX, RightY, pixelsBinWarpedImage = linesProc.findFirstLaneLinesPixels(binWarpedImage, showWindows = False, paintLinePixels = True)
         leftCoef, rightCoef, laneBinWarpedImage = linesProc.getLines(pixelsBinWarpedImage,LeftX,LeftY,RightX,RightY, drawLines = True, drawLane = True)
@@ -188,20 +188,20 @@ def getLaneLinesEnhanced(image, camMatrix, distCoeff, warpParameters, leftLineOb
         leftLineObj.listLastCoefs.clear()
         rightLineObj.listLastCoefs.clear()
     
-    # Saves the X pixel values of both lines and their average to be used in the next frame
-    leftLineObj.lastXValues = LeftX
-    rightLineObj.lastXValues = RightX
-    leftLineObj.lastAverageX = leftLineObj.currentAverageX
-    rightLineObj.lastAverageX = rightLineObj.currentAverageX
     
     # Calculate the radius of curvature of both lines using the function "calculateCurvatureMeters" of the class "LinesProcessing". 
     radLeft, radRight = linesProc.calculateCurvatureMeters(leftCoefMetric, rightCoefMetric)
     # Calculate the position of the car relative to the center of the image using the function "calculateVehiclePos" of the class "LinesProcessing".
     posCar = linesProc.calculateVehiclePos(leftCoefMetric, rightCoefMetric)
     # Unwarp the image with the lane lines and the line drawn on it with the function "UnwarpSquareToPolygon" of the class "Camera" using
-    # the same parameters used to warp the image on the step 5.
+    # the same parameters used to warp the image before.
+    laneUnwarpedImage = cam.UnwarpSquareToPolygon(laneBinWarpedImage, warpParameters[0], warpParameters[1], warpParameters[2], 
+                                                  warpParameters[3], warpParameters[4], warpParameters[5])
+    # Overlap the unwarped image into the original undistorted image using the function "addDataToOriginal" of the class "LinesProcessing". It also
+    # prints the radius of curvature of both lines and the position of the car into the output image.
+    imageOutput = linesProc.addDataToOriginal(undistImg, laneUnwarpedImage, radLeft, radRight, posCar)
     
-    # Updates the coeficients inside of the object
+    # Save polynomial coefficients and radius of curvature inside objects of class "line"
     leftLineObj.currentCoefs = leftCoef.copy()
     rightLineObj.currentCoefs = rightCoef.copy()
     leftLineObj.currentMetricCoefs = leftCoefMetric.copy()
@@ -209,11 +209,6 @@ def getLaneLinesEnhanced(image, camMatrix, distCoeff, warpParameters, leftLineOb
     leftLineObj.radiusCurvature = radLeft
     rightLineObj.radiusCurvature = radRight    
     
-    laneUnwarpedImage = cam.UnwarpSquareToPolygon(laneBinWarpedImage, warpParameters[0], warpParameters[1], warpParameters[2], 
-                                                  warpParameters[3], warpParameters[4], warpParameters[5])
-    # Overlap the unwarped image into the original undistorted image using the function "addDataToOriginal" of the class "LinesProcessing". It also
-    # prints the radius of curvature of both lines and the position of the car into the output image.
-    imageOutput = linesProc.addDataToOriginal(undistImg, laneUnwarpedImage, radLeft, radRight, posCar)
 
     return imageOutput        
 
@@ -231,19 +226,21 @@ def ProcessFrameEnhanced(image, matrix, dist, wParameters):
     outputFrame = getLaneLinesEnhanced(image, matrix, dist, wParameters, leftLine, rightLine, gradXLThresh = (35, 180), 
                                        LThresh = (0, 255), SThresh = (180, 250), frameNumber = ProcessFrameEnhanced.frameNumber)
     
-    cv2.putText(outputFrame, strFrame, (20, 680), cv2.FONT_HERSHEY_DUPLEX, 1, (255,255,255))
+    cv2.putText(outputFrame, strFrame, (20, 680), cv2.FONT_HERSHEY_TRIPLEX, 1, (255,255,0))
     
+    # Calculate difference between last polynomial coefficients and average of good ones.
     leftLine.calcDifference()
     rightLine.calcDifference()
+    
+    # Add new "good" coefficients to deques. If deque is longer than 20 elements, delete last element and reorganize
     leftLine.addNewCoeficients(leftLine.radiusCurvature)
     rightLine.addNewCoeficients(rightLine.radiusCurvature)
     
+    # Calculate weighed average of last "best" coefficients for both lines.
     leftLine.determineBestCoefs()
     rightLine.determineBestCoefs()
     
-    coefsDiffLeft.append(leftLine.coefsDiff)
-    coefsDiffRight.append(rightLine.coefsDiff)
-    
+    # Save  coefficients of last frame to be used for the next one if necessary
     leftLine.lastCoefs = leftLine.currentCoefs.copy()
     rightLine.lastCoefs = rightLine.currentCoefs.copy()
     leftLine.lastMetricCoefs = leftLine.currentMetricCoefs.copy()
