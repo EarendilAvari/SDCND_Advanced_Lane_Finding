@@ -58,18 +58,13 @@ This is the trickiest part of this project because it involves testing a lot in 
 
 First I tried getting the gradient of an image. The gradient corresponds to the change rate of a multidimensional function and in the case of images can be defined as:
 
-$$\triangledown f = \begin{pmatrix}
-g _{x}  \\
-g _{y}
-\end{pmatrix} = \begin{pmatrix}
-\frac{\delta f}{\delta x}  \\
-\frac{\delta f}{\delta y}
-\end{pmatrix}$$
+<a href="https://www.codecogs.com/eqnedit.php?latex=$$\triangledown&space;f&space;=&space;\begin{pmatrix}&space;g&space;_{x}&space;\\&space;g&space;_{y}&space;\end{pmatrix}&space;=&space;\begin{pmatrix}&space;\frac{\delta&space;f}{\delta&space;x}&space;\\&space;\frac{\delta&space;f}{\delta&space;y}&space;\end{pmatrix}$$" target="_blank"><img src="https://latex.codecogs.com/gif.latex?$$\triangledown&space;f&space;=&space;\begin{pmatrix}&space;g&space;_{x}&space;\\&space;g&space;_{y}&space;\end{pmatrix}&space;=&space;\begin{pmatrix}&space;\frac{\delta&space;f}{\delta&space;x}&space;\\&space;\frac{\delta&space;f}{\delta&space;y}&space;\end{pmatrix}$$" title="$$\triangledown f = \begin{pmatrix} g _{x} \\ g _{y} \end{pmatrix} = \begin{pmatrix} \frac{\delta f}{\delta x} \\ \frac{\delta f}{\delta y} \end{pmatrix}$$" /></a>
 
 Where:
 
-$ \frac{\delta f}{\delta x} $ : Derivative with respect to x (gradient in the x direction)
-$ \frac{\delta f}{\delta y} $ : Derivative with respect to y (gradient in the y direction)
+<a href="https://www.codecogs.com/eqnedit.php?latex=\inline&space;\frac{\delta&space;f}{\delta&space;x}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\inline&space;\frac{\delta&space;f}{\delta&space;x}" title="\frac{\delta f}{\delta x}" /></a> : Derivative with respect to x (gradient in the x direction)
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=\inline&space;\frac{\delta&space;f}{\delta&space;y}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\inline&space;\frac{\delta&space;f}{\delta&space;y}" title="\frac{\delta f}{\delta y}" /></a> : Derivative with respect to y (gradient in the y direction)
 
 The gradient needs to be applied separately to different channels of an image. Since we are looking for the edges of the lines without thinking about their color, the most straightforward way to get what we want is applying the gradient on a grayscale version of the original image.
 
@@ -77,19 +72,15 @@ On the pixels where the edges of the lane lines are located the gradient in the 
 
 This gives the idea that getting the magnitude of the gradient, where both directions are considered can be also usefull. The magnitude of the gradient is defined by:
 
-$$ | \triangledown f | = \sqrt{ g _{x} ^{2} + g _{y} ^{2} }$$
+<a href="https://www.codecogs.com/eqnedit.php?latex=|&space;\triangledown&space;f&space;|&space;=&space;\sqrt{&space;g&space;_{x}&space;^{2}&space;&plus;&space;g&space;_{y}&space;^{2}&space;}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?|&space;\triangledown&space;f&space;|&space;=&space;\sqrt{&space;g&space;_{x}&space;^{2}&space;&plus;&space;g&space;_{y}&space;^{2}&space;}" title="| \triangledown f | = \sqrt{ g _{x} ^{2} + g _{y} ^{2} }" /></a>
 
 The gradient in the direction X or Y of an image can be calculated by applying to it the Sobel operator. As ilustration, the Sobel operator in direction X with kernel size 3 looks like this:
 
-$$ S _{x} = \begin{pmatrix}
--1  &  0  & +1 \\
--2 & 0 & +2 \\
--1 & 0 & +1
-\end{pmatrix}$$
+<a href="https://www.codecogs.com/eqnedit.php?latex=S&space;_{x}&space;=&space;\begin{pmatrix}&space;-1&space;&&space;0&space;&&space;&plus;1&space;\\&space;-2&space;&&space;0&space;&&space;&plus;2&space;\\&space;-1&space;&&space;0&space;&&space;&plus;1&space;\end{pmatrix}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?S&space;_{x}&space;=&space;\begin{pmatrix}&space;-1&space;&&space;0&space;&&space;&plus;1&space;\\&space;-2&space;&&space;0&space;&&space;&plus;2&space;\\&space;-1&space;&&space;0&space;&&space;&plus;1&space;\end{pmatrix}" title="S _{x} = \begin{pmatrix} -1 & 0 & +1 \\ -2 & 0 & +2 \\ -1 & 0 & +1 \end{pmatrix}" /></a>
 
 In order to apply the Sobel operator, the convolution of it with the image is calculated:
 
-$$ G _{x} = S _{x} * Image $$
+<a href="https://www.codecogs.com/eqnedit.php?latex=G&space;_{x}&space;=&space;S&space;_{x}&space;*&space;Image" target="_blank"><img src="https://latex.codecogs.com/gif.latex?G&space;_{x}&space;=&space;S&space;_{x}&space;*&space;Image" title="G _{x} = S _{x} * Image" /></a>
 
 This operation can be done with the OpenCV function "Sobel".
 
@@ -101,7 +92,7 @@ By showing all three images can be seen that the lines are better shown on the b
 
 Another approach is to create a binary image by calculating the gradient's direction (not to be confused with the gradient on the X direction or in the Y direction). This can be calculated as following:
 
-$$ \Theta = \tan ^{-1} \Big ( \frac {g _{y}}{g _{x}} \Big ) $$
+<a href="https://www.codecogs.com/eqnedit.php?latex=\Theta&space;=&space;\tan&space;^{-1}&space;\Big&space;(&space;\frac&space;{g&space;_{y}}{g&space;_{x}}&space;\Big&space;)" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\Theta&space;=&space;\tan&space;^{-1}&space;\Big&space;(&space;\frac&space;{g&space;_{y}}{g&space;_{x}}&space;\Big&space;)" title="\Theta = \tan ^{-1} \Big ( \frac {g _{y}}{g _{x}} \Big )" /></a>
 
 ![ Image4](./ImgsReport/05_BinImgsGrayGradientDir.png "Undistorted street image")
 
@@ -227,23 +218,23 @@ To calculate the radius of curvature and the position of the car, three new func
 
 The radius of curvature of a line is calculated with the function "calculateCurvatureMeters" using the following equation:
 
- $$ Line _{rad} = \frac {1 + (2 \cdot A \cdot Y_{max} \cdot Y_{mPerPix}+ B^{2}) ^{\frac{3}{2}}} {|2 \cdot A|}$$ 
+<a href="https://www.codecogs.com/eqnedit.php?latex=Line&space;_{rad}&space;=&space;\frac&space;{1&space;&plus;&space;(2&space;\cdot&space;A&space;\cdot&space;Y_{max}&space;\cdot&space;Y_{mPerPix}&plus;&space;B^{2})&space;^{\frac{3}{2}}}&space;{|2&space;\cdot&space;A|}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?Line&space;_{rad}&space;=&space;\frac&space;{1&space;&plus;&space;(2&space;\cdot&space;A&space;\cdot&space;Y_{max}&space;\cdot&space;Y_{mPerPix}&plus;&space;B^{2})&space;^{\frac{3}{2}}}&space;{|2&space;\cdot&space;A|}" title="Line _{rad} = \frac {1 + (2 \cdot A \cdot Y_{max} \cdot Y_{mPerPix}+ B^{2}) ^{\frac{3}{2}}} {|2 \cdot A|}" /></a>
  
 where A is the coeficient of the quadratic part of the polynomial and B is the coeficient of its linear part, and Ymax is the value of Y in pixels at the bottom of the image.
  
  The position of the car relative to the center of the image is calculated by the function "calculateVehiclePos" with the following equation:
  
-$$X_{car} = X_{leftLine} + \frac{X_{rightLine} - X_{leftLine}}{2} - X_{center} $$
+<a href="https://www.codecogs.com/eqnedit.php?latex=X_{car}&space;=&space;X_{leftLine}&space;&plus;&space;\frac{X_{rightLine}&space;-&space;X_{leftLine}}{2}&space;-&space;X_{center}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?X_{car}&space;=&space;X_{leftLine}&space;&plus;&space;\frac{X_{rightLine}&space;-&space;X_{leftLine}}{2}&space;-&space;X_{center}" title="X_{car} = X_{leftLine} + \frac{X_{rightLine} - X_{leftLine}}{2} - X_{center}" /></a>
  
 calculating before the position X of the lines at the bottom of the image in meters:
  
-$$ X _{leftLine} = A _{leftLine} \cdot (Y_{max} \cdot Y_{mPerPix})^{2} + B_{leftLine} \cdot Y_{max} \cdot Y_{mPerPix} + C_{leftLine} $$
+<a href="https://www.codecogs.com/eqnedit.php?latex=X&space;_{leftLine}&space;=&space;A&space;_{leftLine}&space;\cdot&space;(Y_{max}&space;\cdot&space;Y_{mPerPix})^{2}&space;&plus;&space;B_{leftLine}&space;\cdot&space;Y_{max}&space;\cdot&space;Y_{mPerPix}&space;&plus;&space;C_{leftLine}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?X&space;_{leftLine}&space;=&space;A&space;_{leftLine}&space;\cdot&space;(Y_{max}&space;\cdot&space;Y_{mPerPix})^{2}&space;&plus;&space;B_{leftLine}&space;\cdot&space;Y_{max}&space;\cdot&space;Y_{mPerPix}&space;&plus;&space;C_{leftLine}" title="X _{leftLine} = A _{leftLine} \cdot (Y_{max} \cdot Y_{mPerPix})^{2} + B_{leftLine} \cdot Y_{max} \cdot Y_{mPerPix} + C_{leftLine}" /></a>
  
-$$ X _{rightLine} = A _{rightLine} \cdot (Y_{max} \cdot Y_{mPerPix})^{2} + B_{rightLine} \cdot Y_{max} \cdot Y_{mPerPix} + C_{rightLine} $$
+<a href="https://www.codecogs.com/eqnedit.php?latex=X&space;_{rgtLine}&space;=&space;A&space;_{rgtLine}&space;\cdot&space;(Y_{max}&space;\cdot&space;Y_{mPerPix})^{2}&space;&plus;&space;B_{rgtLine}&space;\cdot&space;Y_{max}&space;\cdot&space;Y_{mPerPix}&space;&plus;&space;C_{rgtLine}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?X&space;_{rgtLine}&space;=&space;A&space;_{rgtLine}&space;\cdot&space;(Y_{max}&space;\cdot&space;Y_{mPerPix})^{2}&space;&plus;&space;B_{rgtLine}&space;\cdot&space;Y_{max}&space;\cdot&space;Y_{mPerPix}&space;&plus;&space;C_{rgtLine}" title="X _{rgtLine} = A _{rgtLine} \cdot (Y_{max} \cdot Y_{mPerPix})^{2} + B_{rgtLine} \cdot Y_{max} \cdot Y_{mPerPix} + C_{rgtLine}" /></a>
 
 And the position X of the center of the image:
 
-$$ X_{center} = (X _{max} \cdot 2) \cdot X_{mPerPix}$$
+<a href="https://www.codecogs.com/eqnedit.php?latex=X_{center}&space;=&space;(X&space;_{max}&space;\cdot&space;2)&space;\cdot&space;X_{mPerPix}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?X_{center}&space;=&space;(X&space;_{max}&space;\cdot&space;2)&space;\cdot&space;X_{mPerPix}" title="X_{center} = (X _{max} \cdot 2) \cdot X_{mPerPix}" /></a>
 
 By calculating these values on the images "Test1.jpg", "Test2.jpg" and "Test3.jpg" the following values are received:
 
@@ -275,18 +266,19 @@ It can be seen that the lane lines are good identified in the three output image
 #### Validation of the pipeline
 
 Now let's recapitulate what are the steps of the pipeline:
-    1. Undistort the image using the function "UndistortImage" of "Camera" and the camera matrix and distortion coeficients obtained with the camera calibration.
-    2. Obtain a binary image of the undistorted image by calculating the gradient in direction X of its L color channel using the function "GradientCalc" of the class "BinaryImg". Default threshold range is (35,180).
-    3. Obtain a binary image of the undistorted image by thresholding its S color channel using the function "HSLBinary" of the class "BinaryImg".Default threshold range is (180, 250)
-    4. Combine both binary images with the function "CombineBinaries" of the class "BinaryImg"
-    5. Warp the combined binary image into a "bird view" image with the function "WarpPolygonToSquare" of the class "Camera" using the polygon parameters calculated with the function "hough_lines" created for the first project.
-    6. Get the lane lines pixels from the warped binary image using the function "findFirstLaneLinesPixels" of the class "LinesProcessing" if the first frame or an image is being processed. Use the function "findNewLaneLinesPixels" instead, if the lines were identified already on another frame or frames. If wanted, paints the left line pixels red and the right line pixels blue.
-    7. Get the coeficients of second grade polynoms which defines the lines with the function "getLines" of the class "LinesProcessing". If wanted draws the lane lines and/or the lane into the image.
-    8. Get the coeficients of second grade polynoms which defines the lines in real measurement units with the function "getMeterPolynoms" of the class "LinesProcessing" to be used in order to calculate the radius of curvature of the lines and the position of the car relative to the center.
-    9. Calculate the radius of curvature of both lines using the function "calculateCurvatureMeters" of the class "LinesProcessing". 
-    10. Calculate the position of the car relative to the center of the image using the function "calculateVehiclePos" of the class "LinesProcessing".
-    11. Unwarp the image with the lane lines and the line drawn on it with the function "UnwarpSquareToPolygon" of the class "Camera" using the same parameters used to warp the image on the step 5.
-    12. Overlap the unwarped image into the original undistorted image using the function "addDataToOriginal" of the class "LinesProcessing". It also prints the radius of curvature of both lines and the position of the car into the output image.
+
+- Undistort the image using the function "UndistortImage" of "Camera" and the camera matrix and distortion coeficients obtained with the camera calibration.
+- Obtain a binary image of the undistorted image by calculating the gradient in direction X of its L color channel using the function "GradientCalc" of the class "BinaryImg". Default threshold range is (35,180).
+- Obtain a binary image of the undistorted image by thresholding its S color channel using the function "HSLBinary" of the class "BinaryImg".Default threshold range is (180, 250).
+- Combine both binary images with the function "CombineBinaries" of the class "BinaryImg".
+- Warp the combined binary image into a "bird view" image with the function "WarpPolygonToSquare" of the class "Camera" using the polygon parameters calculated with the function "hough_lines" created for the first project.
+- Get the lane lines pixels from the warped binary image using the function "findFirstLaneLinesPixels" of the class "LinesProcessing" if the first frame or an image is being processed. Use the function "findNewLaneLinesPixels" instead, if the lines were identified already on another frame or frames. If wanted, paints the left line pixels red and the right line pixels blue.
+- Get the coeficients of second grade polynoms which defines the lines with the function "getLines" of the class "LinesProcessing". If wanted draws the lane lines and/or the lane into the image.
+- Get the coeficients of second grade polynoms which defines the lines in real measurement units with the function "getMeterPolynoms" of the class "LinesProcessing" to be used in order to calculate the radius of curvature of the lines and the position of the car relative to the center.
+- Calculate the radius of curvature of both lines using the function "calculateCurvatureMeters" of the class "LinesProcessing". 
+- Calculate the position of the car relative to the center of the image using the function "calculateVehiclePos" of the class "LinesProcessing".
+- Unwarp the image with the lane lines and the line drawn on it with the function "UnwarpSquareToPolygon" of the class "Camera" using the same parameters used to warp the image before.
+- Overlap the unwarped image into the original undistorted image using the function "addDataToOriginal" of the class "LinesProcessing". It also prints the radius of curvature of both lines and the position of the car into the output image.
 
 
 The function "getStartLaneLines" was defined which executes all of these steps. It can be found in the file "ProcessImages.py" starting at the line 870.
