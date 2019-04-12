@@ -238,9 +238,11 @@ And the position X of the center of the image:
 
 By calculating these values on the images "Test1.jpg", "Test2.jpg" and "Test3.jpg" the following values are received:
 
-Test1.jpg: Radius left:  758.181109299  [m] Radius right:  1764.32871012  [m] Car position:  0.194052998849  [m]
-Test2.jpg: Radius left:  660.840582342  [m] Radius right:  969.242967787  [m] Car position:  0.341771160283  [m]
-Test3.jpg: Radius left:  1702.68530516  [m] Radius right:  966.275112692  [m] Car position:  0.125792894689  [m]
+Test1.jpg: Radius left:  758.181109299  [m] Radius right:  1764.32871012  [m] Car position:  0.194052998849  [m].
+
+Test2.jpg: Radius left:  660.840582342  [m] Radius right:  969.242967787  [m] Car position:  0.341771160283  [m].
+
+Test3.jpg: Radius left:  1702.68530516  [m] Radius right:  966.275112692  [m] Car position:  0.125792894689  [m].
 
 The difference between the radius of curvature between the two lines is because they are not completelly parallel. In the case of "Test2.jpg" they are more similar than in the other two because the lines are more similar. This difference can be used in order to determine if the lines found are plausible or not. A difference bigger than 5000 meters for example would indicate that the lines are very different between each other and therefore they should not be considered a reliable measurement.
 
